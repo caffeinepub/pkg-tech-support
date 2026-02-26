@@ -1,0 +1,149 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-implement-a-full-ticketing-system-with-support-for-ticket-creation-via-form-priority-levels-low-medium-high-critical-sla-tracking-response-and-resolution-time-targets-per-priority-status-updates-open-in-progress-pending-resolved-closed-and-email-style-notification-display-within-the-ui-store-ticket-data-in-the-backend-actor-with-fields-for-id-title-description-priority-status-sla-deadlines-assignee-and-timestamps",
+      "featureTitle": "Implement a full ticketing system with support for ticket creation via form, priority levels (Low, Medium, High, Critical), SLA tracking (response and resolution time targets per priority), status updates (Open, In Progress, Pending, Resolved, Closed), and email-style notification display within the UI. Store ticket data in the backend actor with fields for id, title, description, priority, status, SLA deadlines, assignee, and timestamps.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/CustomerDashboard.tsx",
+        "frontend/src/components/ExpertDashboard.tsx",
+        "frontend/src/components/SLAIndicator.tsx",
+        "frontend/src/components/TicketCreationForm.tsx",
+        "frontend/src/components/TicketDetailView.tsx",
+        "frontend/src/components/TicketListView.tsx",
+        "frontend/src/hooks/useTickets.ts"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "blob-storage@4.0.0",
+        "qr-code@1.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-enhance-the-existing-aiassistantchat-component-to-act-as-a-first-response-ai-bot-capable-of-answering-common-it-faqs-printer-issues-windows-troubleshooting-password-resets-network-connectivity-using-an-expanded-keyword-matching-knowledge-base-and-provide-a-hand-off-to-human-agent-escalation-action-that-creates-a-support-ticket-and-routes-the-user-to-a-live-technician-session",
+      "featureTitle": "Enhance the existing AIAssistantChat component to act as a first-response AI bot capable of answering common IT FAQs (printer issues, Windows troubleshooting, password resets, network connectivity) using an expanded keyword-matching knowledge base, and provide a 'Hand off to human agent' escalation action that creates a support ticket and routes the user to a live technician session.",
+      "files": [
+        "frontend/src/components/AIAssistantChat.tsx",
+        "frontend/src/components/CustomerDashboard.tsx",
+        "frontend/src/hooks/useTickets.ts"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "blob-storage@4.0.0",
+        "qr-code@1.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-a-knowledge-base-section-accessible-from-the-main-navigation-it-must-include-a-searchable-library-of-self-service-articles-organized-by-categories-printers-peripherals-windows-troubleshooting-network-connectivity-account-passwords-hardware-articles-are-stored-in-the-backend-with-fields-for-id-title-category-body-rich-text-tags-and-view-count-display-a-search-bar-category-filter-article-cards-with-excerpts-and-a-full-article-detail-view",
+      "featureTitle": "Build a Knowledge Base section accessible from the main navigation. It must include a searchable library of self-service articles organized by categories (Printers & Peripherals, Windows Troubleshooting, Network & Connectivity, Account & Passwords, Hardware). Articles are stored in the backend with fields for id, title, category, body (rich text), tags, and view count. Display a search bar, category filter, article cards with excerpts, and a full article detail view.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/ExpertDashboard.tsx",
+        "frontend/src/components/Header.tsx",
+        "frontend/src/components/KBArticleDetail.tsx",
+        "frontend/src/components/KBArticleEditor.tsx",
+        "frontend/src/components/KnowledgeBaseView.tsx",
+        "frontend/src/hooks/useKnowledgeBase.ts"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "blob-storage@4.0.0",
+        "qr-code@1.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-a-client-portal-tab-for-authenticated-customers-showing-a-list-of-all-their-tickets-with-status-and-priority-badges-a-service-history-timeline-of-resolved-tickets-the-ability-to-reopen-or-comment-on-existing-tickets-and-a-payment-section-supporting-razorpay-for-purchasing-support-plans-or-paying-for-resolved-incidents-the-portal-should-be-accessible-from-the-customerdashboard",
+      "featureTitle": "Build a Client Portal tab for authenticated customers showing: a list of all their tickets with status and priority badges, a service history timeline of resolved tickets, the ability to reopen or comment on existing tickets, and a payment section supporting Razorpay for purchasing support plans or paying for resolved incidents. The portal should be accessible from the CustomerDashboard.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/ClientPortal.tsx",
+        "frontend/src/components/CustomerDashboard.tsx",
+        "frontend/src/components/ServiceHistoryTimeline.tsx"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "blob-storage@4.0.0",
+        "qr-code@1.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-an-analytics-dashboard-tab-visible-only-to-admin-technician-users-within-the-expertdashboard-display-key-metrics-including-average-first-reply-time-per-ticket-ticket-resolution-rate-resolved-vs-total-open-ticket-count-by-priority-agent-performance-table-tickets-handled-avg-resolution-time-per-technician-and-a-daily-ticket-volume-chart-over-the-last-30-days-compute-metrics-from-existing-ticket-and-message-data-stored-in-the-backend",
+      "featureTitle": "Build an Analytics Dashboard tab visible only to admin/technician users within the ExpertDashboard. Display key metrics including: average first reply time per ticket, ticket resolution rate (resolved vs total), open ticket count by priority, agent performance table (tickets handled, avg resolution time per technician), and a daily ticket volume chart over the last 30 days. Compute metrics from existing ticket and message data stored in the backend.",
+      "files": [
+        "frontend/src/components/AgentPerformanceTable.tsx",
+        "frontend/src/components/AnalyticsDashboard.tsx",
+        "frontend/src/components/ExpertDashboard.tsx",
+        "frontend/src/components/MetricCard.tsx",
+        "frontend/src/components/OpenTicketsByPriorityChart.tsx",
+        "frontend/src/components/TicketVolumeChart.tsx",
+        "frontend/src/hooks/useAnalytics.ts"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "blob-storage@4.0.0",
+        "qr-code@1.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

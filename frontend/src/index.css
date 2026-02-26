@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* OKLCH Color System - Light Mode */
+    --background: oklch(98% 0.01 240);
+    --foreground: oklch(20% 0.02 240);
+    --card: oklch(100% 0 0);
+    --card-foreground: oklch(20% 0.02 240);
+    --popover: oklch(100% 0 0);
+    --popover-foreground: oklch(20% 0.02 240);
+    --primary: oklch(55% 0.18 240);
+    --primary-foreground: oklch(98% 0.01 240);
+    --secondary: oklch(92% 0.02 240);
+    --secondary-foreground: oklch(20% 0.02 240);
+    --muted: oklch(92% 0.02 240);
+    --muted-foreground: oklch(50% 0.02 240);
+    --accent: oklch(92% 0.02 240);
+    --accent-foreground: oklch(20% 0.02 240);
+    --destructive: oklch(55% 0.22 25);
+    --destructive-foreground: oklch(98% 0.01 240);
+    --border: oklch(88% 0.02 240);
+    --input: oklch(88% 0.02 240);
+    --ring: oklch(55% 0.18 240);
+    --radius: 0.5rem;
+    --success: oklch(60% 0.15 145);
+    --warning: oklch(70% 0.15 60);
+  }
+
+  .dark {
+    /* OKLCH Color System - Dark Mode */
+    --background: oklch(15% 0.02 240);
+    --foreground: oklch(95% 0.01 240);
+    --card: oklch(18% 0.02 240);
+    --card-foreground: oklch(95% 0.01 240);
+    --popover: oklch(18% 0.02 240);
+    --popover-foreground: oklch(95% 0.01 240);
+    --primary: oklch(65% 0.18 240);
+    --primary-foreground: oklch(15% 0.02 240);
+    --secondary: oklch(25% 0.02 240);
+    --secondary-foreground: oklch(95% 0.01 240);
+    --muted: oklch(25% 0.02 240);
+    --muted-foreground: oklch(65% 0.02 240);
+    --accent: oklch(25% 0.02 240);
+    --accent-foreground: oklch(95% 0.01 240);
+    --destructive: oklch(55% 0.22 25);
+    --destructive-foreground: oklch(95% 0.01 240);
+    --border: oklch(30% 0.02 240);
+    --input: oklch(30% 0.02 240);
+    --ring: oklch(65% 0.18 240);
+    --success: oklch(60% 0.15 145);
+    --warning: oklch(70% 0.15 60);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom scrollbar styling */
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-muted rounded-lg;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-primary/30 rounded-lg hover:bg-primary/50;
+  }
+  
+  /* Enhanced shadow utilities */
+  .shadow-3xl {
+    box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Animation utilities */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes scale-in {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+  
+  .animate-scale-in {
+    animation: scale-in 0.3s ease-out;
+  }
+  
+  /* Lazy loading optimization */
+  img[loading="lazy"] {
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  img[loading="lazy"].loaded {
+    opacity: 1;
+  }
+}
+
+/* Performance optimization for background images */
+@layer utilities {
+  .bg-lazy {
+    background-image: none;
+    transition: background-image 0.3s ease-in-out;
+  }
+  
+  .bg-lazy.loaded {
+    background-image: var(--bg-image);
+  }
+}

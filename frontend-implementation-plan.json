@@ -1,0 +1,233 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Add Ticketing System, Live Chat AI Bot, Knowledge Base, Client Portal, and Analytics Dashboard",
+  "requirements": [
+    {
+      "id": "REQ-2",
+      "summary": "Implement a full ticketing system with priority levels, SLA tracking, status updates, and email-style notification display",
+      "acceptanceCriteria": [
+        "Customers can create tickets with a title, description, and priority selection",
+        "Each ticket displays its current status and SLA deadline",
+        "SLA breach is visually indicated when the deadline has passed",
+        "Technicians can update ticket status and priority",
+        "Tickets are persisted in the backend and retrievable by ticket ID or user"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/TicketCreationForm.tsx",
+          "operation": "create",
+          "description": "Create a ticket creation form component with fields for title, description, and priority dropdown (Low, Medium, High, Critical). Use shadcn/ui Form, Input, Textarea, Select components. Submit via a custom hook that calls backend ticket creation. Display validation errors and success feedback."
+        },
+        {
+          "path": "frontend/src/components/TicketListView.tsx",
+          "operation": "create",
+          "description": "Create a ticket list component displaying all user tickets with status badges, priority labels, SLA deadline countdown, and visual SLA breach indicators (red highlight). Include filters for status and priority. Use shadcn/ui Table, Badge components. Make each row clickable to open ticket detail."
+        },
+        {
+          "path": "frontend/src/components/TicketDetailView.tsx",
+          "operation": "create",
+          "description": "Create a ticket detail view showing full ticket info, message history, SLA status with visual breach warning, and action buttons for status/priority updates (technician only). Include a message compose area. Use shadcn/ui Card, Badge, ScrollArea, and authorization checks to show/hide technician controls."
+        },
+        {
+          "path": "frontend/src/hooks/useTickets.ts",
+          "operation": "create",
+          "description": "Create React Query hooks for ticket operations: useCreateTicket (mutation), useGetUserTickets (query with polling), useGetAdminTickets (query), useUpdateTicketStatus (mutation), useGetTicketDetail (query). Map backend ticket data to include computed SLA breach status and formatted timestamps."
+        },
+        {
+          "path": "frontend/src/components/CustomerDashboard.tsx",
+          "operation": "modify",
+          "description": "Add a Tickets tab alongside Chat and Payment sections. Wire in TicketListView for customers to see their tickets. Include a button to open TicketCreationForm in a dialog. Use the authorization component to ensure user authentication before showing ticket data."
+        },
+        {
+          "path": "frontend/src/components/ExpertDashboard.tsx",
+          "operation": "modify",
+          "description": "Add a Tickets tab for technicians showing TicketListView with all tickets. Include filters for assigned/unassigned tickets. Wire in TicketDetailView for technician actions. Use authorization to verify technician role before rendering."
+        },
+        {
+          "path": "frontend/src/components/SLAIndicator.tsx",
+          "operation": "create",
+          "description": "Create a reusable SLA indicator component displaying deadline countdown, time remaining, and visual breach warning (red badge or icon). Accept SLA timestamp and priority as props, compute remaining time client-side."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Ensure ticket-related routes are registered if needed. If TicketDetailView requires a dedicated route, add lazy route for /ticket/:id with TicketDetailView component."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Enhance AIAssistantChat to answer IT FAQs and provide human handover with ticket creation",
+      "acceptanceCriteria": [
+        "AI bot responds to common IT support topics with relevant guidance",
+        "Bot offers a 'Talk to a human' option at any point in the conversation",
+        "Selecting human handover creates a ticket and opens the live chat section",
+        "Chat history is preserved when transitioning from bot to human agent"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/AIAssistantChat.tsx",
+          "operation": "modify",
+          "description": "Expand the keyword-matching knowledge base to include IT FAQs: printer issues (paper jam, driver install), Windows troubleshooting (blue screen, slow performance), password resets (account locked, forgot password), and network connectivity (Wi-Fi not working, no internet). Add a 'Talk to a human' button in each bot response. Implement handover logic that creates a support ticket via useCreateTicket hook, passes chat history as initial ticket context, and navigates user to CustomerDashboard chat tab."
+        },
+        {
+          "path": "frontend/src/hooks/useTickets.ts",
+          "operation": "modify",
+          "description": "Add useCreateTicketFromBot mutation that accepts chat history and creates a ticket with priority Medium and a summary title derived from the chat topic. Return the created ticket ID for navigation."
+        },
+        {
+          "path": "frontend/src/components/CustomerDashboard.tsx",
+          "operation": "modify",
+          "description": "Add support for deep-linking to a specific ticket in the Chat tab. Accept ticketId query parameter and auto-select that ticket when the dashboard loads. Preserve AI chat history in the ticket's first message if provided during creation."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Build a searchable Knowledge Base section with categories, articles, and view count tracking",
+      "acceptanceCriteria": [
+        "Knowledge base is reachable from the main app navigation",
+        "Users can search articles by keyword across title, body, and tags",
+        "Articles are grouped and filterable by category",
+        "Clicking an article opens a full detail view",
+        "View count increments each time an article is opened",
+        "Admin/technician users can create and edit articles"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/KnowledgeBaseView.tsx",
+          "operation": "create",
+          "description": "Create the main Knowledge Base view with a search input, category filter dropdown (Printers & Peripherals, Windows Troubleshooting, Network & Connectivity, Account & Passwords, Hardware), and article card grid. Use useGetAllKBArticles and useSearchKBArticles hooks with debounced search. Display article cards showing title, category badge, excerpt (first 150 chars), tags, and view count. Make cards clickable to navigate to article detail."
+        },
+        {
+          "path": "frontend/src/components/KBArticleDetail.tsx",
+          "operation": "create",
+          "description": "Create article detail view displaying full title, category, tags, view count, publish date, and rich text body. Call useIncrementArticleViewCount on mount. Include back button to return to KnowledgeBaseView. Show edit/delete buttons for admin/technician users using authorization checks."
+        },
+        {
+          "path": "frontend/src/components/KBArticleEditor.tsx",
+          "operation": "create",
+          "description": "Create article editor form for creating/editing articles with fields: title (Input), category (Select), body (Textarea with rich text support or markdown preview), and tags (multi-input). Use useCreateKBArticle and useUpdateKBArticle mutations. Guard with authorization to restrict access to admin/technician roles."
+        },
+        {
+          "path": "frontend/src/hooks/useKnowledgeBase.ts",
+          "operation": "create",
+          "description": "Create React Query hooks for KB operations: useGetAllKBArticles (query), useSearchKBArticles (query with search term), useGetArticlesByCategory (query), useGetKBArticle (query for single article), useCreateKBArticle (mutation), useUpdateKBArticle (mutation), useDeleteKBArticle (mutation), useIncrementArticleViewCount (mutation)."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add lazy route for /knowledge-base pointing to KnowledgeBaseView and /knowledge-base/:articleId pointing to KBArticleDetail. Ensure routes are accessible to all authenticated users."
+        },
+        {
+          "path": "frontend/src/components/Header.tsx",
+          "operation": "modify",
+          "description": "Add a Knowledge Base navigation link in the header menu that routes to /knowledge-base. Make it visible to all authenticated users."
+        },
+        {
+          "path": "frontend/src/components/ExpertDashboard.tsx",
+          "operation": "modify",
+          "description": "Add a Knowledge Base Management tab for admin/technician users. Show a list of all articles with edit/delete actions and a button to open KBArticleEditor for creating new articles. Use authorization to guard tab visibility."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Build a Client Portal for customers with ticket history, service timeline, commenting, and Razorpay payment integration",
+      "acceptanceCriteria": [
+        "Customers see all their own tickets with status, priority, and SLA info",
+        "Service history lists resolved and closed tickets in chronological order",
+        "Customers can add comments to open tickets",
+        "A payment section displays Razorpay checkout for support plan purchase",
+        "Portal is only accessible to authenticated customers"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ClientPortal.tsx",
+          "operation": "create",
+          "description": "Create a Client Portal component with tabs: My Tickets (showing TicketListView for user's tickets), Service History (timeline of resolved/closed tickets sorted by date with status badges and resolution summaries), and Payments (Razorpay checkout section). Use authorization to ensure user authentication. Wire into CustomerDashboard as a new top-level tab."
+        },
+        {
+          "path": "frontend/src/components/ServiceHistoryTimeline.tsx",
+          "operation": "create",
+          "description": "Create a timeline component displaying resolved and closed tickets in chronological order (newest first). Show ticket title, resolution date, priority badge, status badge, and a brief resolution summary. Use shadcn/ui Card and custom CSS for timeline visual (vertical line with nodes)."
+        },
+        {
+          "path": "frontend/src/components/TicketCommentSection.tsx",
+          "operation": "create",
+          "description": "Create a comment section component for open tickets. Display existing comments/messages with timestamps and author names. Include a compose area for adding new comments. Use useSendMessage mutation from existing hooks. Show only for open/in-progress tickets."
+        },
+        {
+          "path": "frontend/src/components/RazorpayPaymentSection.tsx",
+          "operation": "create",
+          "description": "Create a Razorpay payment section displaying support plan options (e.g., Basic, Premium, Enterprise) with pricing and feature lists. Include a checkout button that triggers Razorpay integration. Use useCreateSupportCheckoutSession hook to initiate payment flow. Display payment status (pending/completed/failed) if available."
+        },
+        {
+          "path": "frontend/src/hooks/usePayments.ts",
+          "operation": "create",
+          "description": "Create React Query hooks for payment operations: useCreateSupportCheckoutSession (mutation returning Razorpay session URL), useGetPaymentRecord (query), useUpdatePaymentStatus (mutation). Include logic to handle Razorpay redirect flow similar to Stripe integration pattern."
+        },
+        {
+          "path": "frontend/src/components/CustomerDashboard.tsx",
+          "operation": "modify",
+          "description": "Add a Client Portal tab next to Chat, Tickets, and Payment sections. Wire in the ClientPortal component. Ensure tab is visible only to authenticated customer users using authorization checks."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Register routes for /payment-success and /payment-failure if not already present. These should display appropriate success/failure messages and return-to-portal links for Razorpay payment flow."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Build an Analytics Dashboard for admin/technician users with performance metrics and charts",
+      "acceptanceCriteria": [
+        "Analytics tab is visible only to technician/admin users",
+        "First reply time and resolution rate metrics are displayed as summary cards",
+        "Open tickets by priority are shown as a visual breakdown (bar or pie chart)",
+        "Agent performance table lists each technician with their ticket stats",
+        "Daily ticket volume chart covers the last 30 days",
+        "All data is derived from backend ticket and message records"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/AnalyticsDashboard.tsx",
+          "operation": "create",
+          "description": "Create an Analytics Dashboard component displaying key metrics: average first reply time card, ticket resolution rate card, open ticket count by priority bar chart, agent performance table, and daily ticket volume line chart (last 30 days). Use useGetAnalyticsMetrics hook to fetch data. Use shadcn/ui Card for metric summaries. Use a lightweight charting library (e.g., recharts) for visualizations. Guard with authorization to show only to admin/technician users."
+        },
+        {
+          "path": "frontend/src/components/MetricCard.tsx",
+          "operation": "create",
+          "description": "Create a reusable metric card component displaying a label, value, and optional trend indicator. Use shadcn/ui Card for consistent styling."
+        },
+        {
+          "path": "frontend/src/components/AgentPerformanceTable.tsx",
+          "operation": "create",
+          "description": "Create a table component listing each technician with columns: name, tickets handled, average resolution time, and status (online/offline). Fetch data from useGetAnalyticsMetrics and useGetAllAvailableTechnicians hooks. Use shadcn/ui Table for layout."
+        },
+        {
+          "path": "frontend/src/components/TicketVolumeChart.tsx",
+          "operation": "create",
+          "description": "Create a line chart component showing daily ticket volume over the last 30 days. Accept data from useGetAnalyticsMetrics. Use recharts LineChart with responsive container and tooltip."
+        },
+        {
+          "path": "frontend/src/components/OpenTicketsByPriorityChart.tsx",
+          "operation": "create",
+          "description": "Create a bar or pie chart showing breakdown of open tickets by priority (Low, Medium, High, Critical). Accept data from useGetAnalyticsMetrics. Use recharts BarChart or PieChart."
+        },
+        {
+          "path": "frontend/src/hooks/useAnalytics.ts",
+          "operation": "create",
+          "description": "Create React Query hook useGetAnalyticsMetrics that fetches analytics data from backend (average first reply time, resolution rate, open ticket counts by priority, agent stats, daily volume). Include polling for real-time updates."
+        },
+        {
+          "path": "frontend/src/components/ExpertDashboard.tsx",
+          "operation": "modify",
+          "description": "Add an Analytics tab to the ExpertDashboard. Wire in the AnalyticsDashboard component. Use authorization (isCallerAdmin) to show this tab only to admin/technician users. Conditionally render based on user role retrieved from useGetCallerUserRole hook."
+        }
+      ]
+    }
+  ]
+}

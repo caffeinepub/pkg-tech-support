@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 5,
+  "summary": "IT support/helpdesk website with ticketing system, live chat, knowledge base, client portal, and analytics features.",
+  "architectural_notes": [
+    "Razorpay integration required for client portal payments",
+    "AI bot needed for live chat FAQ handling with human handover support"
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-publish-the-current-version-of-the-app-to-production-so-it-is-live-and-accessible-to-users",
+      "title": "Publish the current version of the app to production so it is live and accessible to users.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-full-ticketing-system-with-support-for-ticket-creation-via-form-priority-levels-low-medium-high-critical-sla-tracking-response-and-resolution-time-targets-per-priority-status-updates-open-in-progress-pending-resolved-closed-and-email-style-notification-display-within-the-ui-store-ticket-data-in-the-backend-actor-with-fields-for-id-title-description-priority-status-sla-deadlines-assignee-and-timestamps",
+      "title": "Implement a full ticketing system with support for ticket creation via form, priority levels (Low, Medium, High, Critical), SLA tracking (response and resolution time targets per priority), status updates (Open, In Progress, Pending, Resolved, Closed), and email-style notification display within the UI. Store ticket data in the backend actor with fields for id, title, description, priority, status, SLA deadlines, assignee, and timestamps.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enhance-the-existing-aiassistantchat-component-to-act-as-a-first-response-ai-bot-capable-of-answering-common-it-faqs-printer-issues-windows-troubleshooting-password-resets-network-connectivity-using-an-expanded-keyword-matching-knowledge-base-and-provide-a-hand-off-to-human-agent-escalation-action-that-creates-a-support-ticket-and-routes-the-user-to-a-live-technician-session",
+      "title": "Enhance the existing AIAssistantChat component to act as a first-response AI bot capable of answering common IT FAQs (printer issues, Windows troubleshooting, password resets, network connectivity) using an expanded keyword-matching knowledge base, and provide a 'Hand off to human agent' escalation action that creates a support ticket and routes the user to a live technician session.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-a-knowledge-base-section-accessible-from-the-main-navigation-it-must-include-a-searchable-library-of-self-service-articles-organized-by-categories-printers-peripherals-windows-troubleshooting-network-connectivity-account-passwords-hardware-articles-are-stored-in-the-backend-with-fields-for-id-title-category-body-rich-text-tags-and-view-count-display-a-search-bar-category-filter-article-cards-with-excerpts-and-a-full-article-detail-view",
+      "title": "Build a Knowledge Base section accessible from the main navigation. It must include a searchable library of self-service articles organized by categories (Printers & Peripherals, Windows Troubleshooting, Network & Connectivity, Account & Passwords, Hardware). Articles are stored in the backend with fields for id, title, category, body (rich text), tags, and view count. Display a search bar, category filter, article cards with excerpts, and a full article detail view.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-a-client-portal-tab-for-authenticated-customers-showing-a-list-of-all-their-tickets-with-status-and-priority-badges-a-service-history-timeline-of-resolved-tickets-the-ability-to-reopen-or-comment-on-existing-tickets-and-a-payment-section-supporting-razorpay-for-purchasing-support-plans-or-paying-for-resolved-incidents-the-portal-should-be-accessible-from-the-customerdashboard",
+      "title": "Build a Client Portal tab for authenticated customers showing: a list of all their tickets with status and priority badges, a service history timeline of resolved tickets, the ability to reopen or comment on existing tickets, and a payment section supporting Razorpay for purchasing support plans or paying for resolved incidents. The portal should be accessible from the CustomerDashboard.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-an-analytics-dashboard-tab-visible-only-to-admin-technician-users-within-the-expertdashboard-display-key-metrics-including-average-first-reply-time-per-ticket-ticket-resolution-rate-resolved-vs-total-open-ticket-count-by-priority-agent-performance-table-tickets-handled-avg-resolution-time-per-technician-and-a-daily-ticket-volume-chart-over-the-last-30-days-compute-metrics-from-existing-ticket-and-message-data-stored-in-the-backend",
+      "title": "Build an Analytics Dashboard tab visible only to admin/technician users within the ExpertDashboard. Display key metrics including: average first reply time per ticket, ticket resolution rate (resolved vs total), open ticket count by priority, agent performance table (tickets handled, avg resolution time per technician), and a daily ticket volume chart over the last 30 days. Compute metrics from existing ticket and message data stored in the backend.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Ticketing system with email/form integration, priorities, SLAs, and status updates",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Live chat widget with AI bot for FAQs and human handover",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Knowledge base for self-service articles (printer issues, Windows troubleshooting, etc.)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Client portal for ticket tracking, service history, and Razorpay payments",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Analytics dashboard for first reply time, resolution rates, and agent performance",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "IT Helpdesk Support Portal",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

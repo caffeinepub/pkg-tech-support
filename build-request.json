@@ -1,0 +1,126 @@
+{
+  "kind": "build_request",
+  "title": "Add Ticketing System, Live Chat AI Bot, Knowledge Base, Client Portal, and Analytics Dashboard",
+  "projectName": "PKG Tech Support",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-2",
+      "text": "Implement a full ticketing system with support for ticket creation via form, priority levels (Low, Medium, High, Critical), SLA tracking (response and resolution time targets per priority), status updates (Open, In Progress, Pending, Resolved, Closed), and email-style notification display within the UI. Store ticket data in the backend actor with fields for id, title, description, priority, status, SLA deadlines, assignee, and timestamps.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-recent-user"
+        ],
+        "quotes": [
+          "Ticketing system with SLAs and priorities"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Customers can create tickets with a title, description, and priority selection",
+        "Each ticket displays its current status and SLA deadline",
+        "SLA breach is visually indicated when the deadline has passed",
+        "Technicians can update ticket status and priority",
+        "Tickets are persisted in the backend and retrievable by ticket ID or user"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Enhance the existing AIAssistantChat component to act as a first-response AI bot capable of answering common IT FAQs (printer issues, Windows troubleshooting, password resets, network connectivity) using an expanded keyword-matching knowledge base, and provide a 'Hand off to human agent' escalation action that creates a support ticket and routes the user to a live technician session.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-recent-user"
+        ],
+        "quotes": [
+          "Live chat with AI bot"
+        ]
+      },
+      "acceptanceCriteria": [
+        "AI bot responds to common IT support topics with relevant guidance",
+        "Bot offers a 'Talk to a human' option at any point in the conversation",
+        "Selecting human handover creates a ticket and opens the live chat section",
+        "Chat history is preserved when transitioning from bot to human agent"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Build a Knowledge Base section accessible from the main navigation. It must include a searchable library of self-service articles organized by categories (Printers & Peripherals, Windows Troubleshooting, Network & Connectivity, Account & Passwords, Hardware). Articles are stored in the backend with fields for id, title, category, body (rich text), tags, and view count. Display a search bar, category filter, article cards with excerpts, and a full article detail view.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-recent-user"
+        ],
+        "quotes": [
+          "Knowledge base"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Knowledge base is reachable from the main app navigation",
+        "Users can search articles by keyword across title, body, and tags",
+        "Articles are grouped and filterable by category",
+        "Clicking an article opens a full detail view",
+        "View count increments each time an article is opened",
+        "Admin/technician users can create and edit articles"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Build a Client Portal tab for authenticated customers showing: a list of all their tickets with status and priority badges, a service history timeline of resolved tickets, the ability to reopen or comment on existing tickets, and a payment section supporting Razorpay for purchasing support plans or paying for resolved incidents. The portal should be accessible from the CustomerDashboard.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-recent-user"
+        ],
+        "quotes": [
+          "Client portal"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Customers see all their own tickets with status, priority, and SLA info",
+        "Service history lists resolved and closed tickets in chronological order",
+        "Customers can add comments to open tickets",
+        "A payment section displays Razorpay checkout for support plan purchase",
+        "Portal is only accessible to authenticated customers"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Build an Analytics Dashboard tab visible only to admin/technician users within the ExpertDashboard. Display key metrics including: average first reply time per ticket, ticket resolution rate (resolved vs total), open ticket count by priority, agent performance table (tickets handled, avg resolution time per technician), and a daily ticket volume chart over the last 30 days. Compute metrics from existing ticket and message data stored in the backend.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-recent-user"
+        ],
+        "quotes": [
+          "Analytics dashboard"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Analytics tab is visible only to technician/admin users",
+        "First reply time and resolution rate metrics are displayed as summary cards",
+        "Open tickets by priority are shown as a visual breakdown (bar or pie chart)",
+        "Agent performance table lists each technician with their ticket stats",
+        "Daily ticket volume chart covers the last 30 days",
+        "All data is derived from backend ticket and message records"
+      ]
+    }
+  ],
+  "constraints": [
+    "All backend logic must remain in the single main.mo actor file",
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
+    "Razorpay payment integration should be used in the Client Portal (not Stripe, per project state)",
+    "All user-facing text must be in English"
+  ],
+  "nonGoals": [
+    "Docker or containerized deployment",
+    "Source code export",
+    "External email delivery (SMTP/SendGrid) — notification display is UI-only",
+    "Real-time WebSocket-based chat (polling-based updates are acceptable)",
+    "Mobile app or React Native version"
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}
