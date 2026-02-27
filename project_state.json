@@ -1,13 +1,18 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 5,
+  "projectStateVersion": 15,
   "summary": "IT support/helpdesk website with ticketing system, live chat, knowledge base, client portal, and analytics features.",
   "architectural_notes": [
     "Razorpay integration required for client portal payments",
-    "AI bot needed for live chat FAQ handling with human handover support"
+    "AI bot needed for live chat FAQ handling with human handover support",
+    "Separate login pages for expert and customer roles; home page should not contain expert login link",
+    "Ticket status modification is restricted to experts/admins only; customers have read-only access to ticket status",
+    "Ticket creation must not require payment; payment gate must be removed from ticket creation flow"
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "Chat history not visible on customer side; customers cannot reply in live chat"
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
       "id": "feature-publish-the-current-version-of-the-app-to-production-so-it-is-live-and-accessible-to-users",
@@ -56,6 +61,86 @@
         "REQ-6"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-create-a-dedicated-customer-login-page-at-a-separate-route-e-g-customer-login-that-renders-the-existing-customerlogin-component-this-page-should-be-accessible-from-the-home-page-via-a-customer-login-call-to-action-but-expert-login-must-not-appear-alongside-it-on-the-home-page",
+      "title": "Create a dedicated Customer Login page at a separate route (e.g. /customer-login) that renders the existing CustomerLogin component. This page should be accessible from the home page via a 'Customer Login' call-to-action, but expert login must not appear alongside it on the home page.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-remove-the-need-help-option-from-all-ui-locations-where-it-appears-including-any-navigation-links-buttons-floating-action-areas-or-prompts-that-reference-it",
+      "title": "Remove the 'Need Help' option from all UI locations where it appears, including any navigation links, buttons, floating action areas, or prompts that reference it.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-improve-the-overall-colorful-visual-environment-of-the-application-buttons-and-clickable-interactive-elements-tabs-cards-action-icons-toggles-must-use-vivid-distinct-colors-per-category-state-with-strong-contrast-ratios-clear-hover-and-active-states-scale-shadow-or-color-shift-and-consistent-border-radius-and-padding-so-they-are-immediately-recognizable-as-interactive-apply-a-coherent-vibrant-color-palette-across-the-entire-ui-that-feels-polished-and-professional-while-improving-functional-clarity",
+      "title": "Improve the overall colorful visual environment of the application: buttons and clickable/interactive elements (tabs, cards, action icons, toggles) must use vivid, distinct colors per category/state with strong contrast ratios, clear hover and active states (scale, shadow, or color shift), and consistent border-radius and padding so they are immediately recognizable as interactive. Apply a coherent, vibrant color palette across the entire UI that feels polished and professional while improving functional clarity.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-all-modals-dialogs-popups-and-overlay-panels-that-appear-above-the-main-page-content-must-render-with-a-distinct-background-color-different-from-the-main-page-background-and-the-standard-card-surface-color-so-users-can-immediately-identify-them-as-a-separate-layer-apply-this-consistently-to-all-existing-dialog-modal-components-including-profilesetupmodal-ticketcreationform-dialog-prechatform-chatfeedbackdialog-kbarticleeditor-when-used-as-a-modal-and-any-other-overlay-surfaces",
+      "title": "All modals, dialogs, popups, and overlay panels that appear above the main page content must render with a distinct background color (different from the main page background and the standard card/surface color) so users can immediately identify them as a separate layer. Apply this consistently to all existing dialog/modal components including ProfileSetupModal, TicketCreationForm dialog, PreChatForm, ChatFeedbackDialog, KBArticleEditor when used as a modal, and any other overlay surfaces.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enable-the-chat-with-expert-live-chat-tab-feature-for-customers-in-the-customerdashboard-unconditionally-removing-any-payment-gate-or-payment-requirement-check-that-currently-blocks-access-to-live-chat-customers-must-be-able-to-initiate-and-participate-in-chat-sessions-with-available-technicians-without-needing-a-paid-plan",
+      "title": "Enable the 'Chat with Expert' (Live Chat) tab/feature for customers in the CustomerDashboard unconditionally, removing any payment gate or payment requirement check that currently blocks access to live chat. Customers must be able to initiate and participate in chat sessions with available technicians without needing a paid plan.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-restrict-ticket-status-modification-so-that-only-expert-technician-users-can-change-a-ticket-s-status-in-ticketdetailview-and-any-other-location-that-renders-a-status-update-control-dropdown-buttons-hide-or-disable-the-status-change-ui-when-the-current-user-is-a-customer-istechnician-false-customers-must-not-be-able-to-alter-ticket-status-under-any-circumstance",
+      "title": "Restrict ticket status modification so that only expert/technician users can change a ticket's status. In TicketDetailView and any other location that renders a status update control (dropdown, buttons), hide or disable the status-change UI when the current user is a customer (isTechnician === false). Customers must not be able to alter ticket status under any circumstance.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-that-ticket-status-information-is-visible-only-to-the-customer-who-owns-the-ticket-in-ticketlistview-and-ticketdetailview-when-rendered-in-customer-context-display-the-status-badge-label-for-the-customer-s-own-tickets-in-the-expert-admin-view-expertdashboard-tickets-tab-do-not-expose-or-remove-any-existing-expert-visible-status-displays-the-restriction-applies-to-preventing-customers-from-seeing-tickets-that-are-not-theirs-not-to-hiding-status-from-experts",
+      "title": "Ensure that ticket status information is visible only to the customer who owns the ticket. In TicketListView and TicketDetailView, when rendered in customer context, display the status badge/label for the customer's own tickets. In the expert/admin view (ExpertDashboard Tickets tab), do not expose or remove any existing expert-visible status displays — the restriction applies to preventing customers from seeing tickets that are not theirs, not to hiding status from experts.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-chatsection-component-so-that-customers-can-see-the-full-chat-message-history-for-their-active-support-sessions-ensure-that-when-a-customer-selects-a-ticket-or-opens-a-chat-session-all-previously-exchanged-messages-are-fetched-from-the-backend-and-displayed-in-chronological-order-in-the-chat-ui-debug-and-resolve-any-query-filtering-principal-mismatch-or-data-fetching-issues-that-prevent-message-history-from-rendering-on-the-customer-side",
+      "title": "Fix the ChatSection component so that customers can see the full chat message history for their active support sessions. Ensure that when a customer selects a ticket or opens a chat session, all previously exchanged messages are fetched from the backend and displayed in chronological order in the chat UI. Debug and resolve any query filtering, principal mismatch, or data-fetching issues that prevent message history from rendering on the customer side.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-chatsection-component-so-that-customers-can-type-and-send-reply-messages-in-an-active-chat-session-ensure-the-message-input-field-and-send-button-are-rendered-and-functional-for-customers-not-just-technicians-debug-and-resolve-any-role-check-actor-call-or-state-management-issues-that-block-customers-from-submitting-new-messages-after-sending-the-new-message-must-appear-immediately-in-the-chat-thread",
+      "title": "Fix the ChatSection component so that customers can type and send reply messages in an active chat session. Ensure the message input field and send button are rendered and functional for customers (not just technicians). Debug and resolve any role-check, actor call, or state management issues that block customers from submitting new messages. After sending, the new message must appear immediately in the chat thread.",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-remove-all-payment-gate-checks-from-the-ticket-creation-flow-in-clientportal-and-ticketcreationform-customers-must-be-able-to-open-the-ticket-creation-dialog-and-submit-a-new-support-ticket-without-any-payment-plan-validation-stripe-razorpay-checks-or-subscription-status-checks-blocking-the-action-the-create-ticket-button-and-dialog-must-be-unconditionally-accessible-to-any-authenticated-customer",
+      "title": "Remove all payment gate checks from the ticket creation flow in ClientPortal and TicketCreationForm. Customers must be able to open the ticket creation dialog and submit a new support ticket without any payment plan validation, Stripe/Razorpay checks, or subscription status checks blocking the action. The 'Create Ticket' button and dialog must be unconditionally accessible to any authenticated customer.",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -87,6 +172,92 @@
       "id": "AR-5",
       "summary": "Analytics dashboard for first reply time, resolution rates, and agent performance",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Create separate login pages for expert and customer; remove expert login link from the home page",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Create a dedicated Expert Login page at a separate route (e.g. /expert-login) that renders the existing ExpertLogin component. This page should be accessible only via its direct URL and must not be linked or referenced from the home page or the main navigation.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Update the App.tsx router configuration to register the new /expert-login and /customer-login routes, and update the home page (LoginPrompt component) to remove any expert login link and only expose the customer login path.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Remove 'Need Help' option from the UI",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Improve UI with colorful environment, better-styled buttons and clickable elements for improved functionality and visual clarity",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Modals/popups/overlays that appear above the page should use a distinct background color to be easily identifiable from the main content",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Enable 'Chat with Expert' feature for customers without requiring payment integration (temporary until payment is integrated)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Only experts can modify ticket status; customers cannot change ticket status. Only customers can view their own ticket status.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Change the host URL of the deployed application",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Update the host URL configuration of the deployed application so that the app is served from the new/correct host URL. This includes updating any hardcoded references to the old host URL in frontend configuration files (e.g., environment variables, index.html base href, or any fetch/actor endpoint URLs) so all API calls and routing work correctly under the new host.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-17",
+      "summary": "Fix chat history not visible on customer side and customers cannot reply in chat; automate error fixing",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-18",
+      "summary": "Allow customers to create tickets without payment integration (remove payment gate from ticket creation)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-22",
+      "summary": "Audit the backend `main.mo` actor for any authorization checks on `getChatMessages`, `sendMessage`, or equivalent chat query/update functions that incorrectly restrict customer principals from reading or writing their own chat messages. Ensure that customers can call these functions for sessions linked to their own tickets, while preventing access to other customers' sessions. Fix any overly restrictive or missing principal-based access control that causes the chat history and reply issues.",
+      "reqIds": [
+        "REQ-20"
+      ],
       "status": "pending"
     }
   ],

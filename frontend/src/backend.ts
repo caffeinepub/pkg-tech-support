@@ -268,6 +268,7 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getChatFeedback(sessionId: bigint): Promise<ChatFeedback | null>;
+    getChatMessages(ticketId: bigint): Promise<Array<ChatMessage>>;
     getKBArticle(articleId: bigint): Promise<KBArticle | null>;
     getLoginEvents(): Promise<Array<LoginEvent>>;
     getLoginEventsCSV(): Promise<string>;
@@ -284,9 +285,11 @@ export interface backendInterface {
     isCallerAdmin(): Promise<boolean>;
     isStripeConfigured(): Promise<boolean>;
     markMessagesAsRead(user1: Principal, user2: Principal): Promise<void>;
+    markTicketMessagesAsRead(ticketId: bigint): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     searchKBArticles(searchTerm: string): Promise<Array<KBArticle>>;
     sendMessage(recipient: Principal, content: string, attachment: ExternalBlob | null): Promise<MessageStatus>;
+    sendMessageForTicket(ticketId: bigint, content: string, attachment: ExternalBlob | null): Promise<MessageStatus>;
     setAllTechniciansOffline(): Promise<void>;
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
     setTechnicianAvailability(isAvailable: boolean): Promise<void>;
@@ -654,6 +657,20 @@ export class Backend implements backendInterface {
             return from_candid_opt_n33(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getChatMessages(arg0: bigint): Promise<Array<ChatMessage>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getChatMessages(arg0);
+                return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getChatMessages(arg0);
+            return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getKBArticle(arg0: bigint): Promise<KBArticle | null> {
         if (this.processError) {
             try {
@@ -878,6 +895,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async markTicketMessagesAsRead(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.markTicketMessagesAsRead(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.markTicketMessagesAsRead(arg0);
+            return result;
+        }
+    }
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
@@ -917,6 +948,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.sendMessage(arg0, arg1, await to_candid_opt_n49(this._uploadFile, this._downloadFile, arg2));
+            return from_candid_MessageStatus_n50(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async sendMessageForTicket(arg0: bigint, arg1: string, arg2: ExternalBlob | null): Promise<MessageStatus> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.sendMessageForTicket(arg0, arg1, await to_candid_opt_n49(this._uploadFile, this._downloadFile, arg2));
+                return from_candid_MessageStatus_n50(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.sendMessageForTicket(arg0, arg1, await to_candid_opt_n49(this._uploadFile, this._downloadFile, arg2));
             return from_candid_MessageStatus_n50(this._uploadFile, this._downloadFile, result);
         }
     }

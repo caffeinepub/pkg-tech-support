@@ -46,7 +46,14 @@ function IndexPage() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       {!isAuthenticated && <LoginPrompt />}
-      {showProfileSetup && <ProfileSetupModal />}
+      {showProfileSetup && (
+        <ProfileSetupModal
+          isOpen={showProfileSetup}
+          onComplete={() => {
+            // Profile saved — React Query will refetch and re-render automatically
+          }}
+        />
+      )}
       {showMainContent && userProfile && <MainContent userProfile={userProfile} />}
     </Suspense>
   );
@@ -103,7 +110,7 @@ const knowledgeBaseRoute = createRoute({
   component: () => (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <Suspense fallback={<LoadingSpinner />}>
-        <KnowledgeBaseView isAdmin={false} />
+        <KnowledgeBaseView />
       </Suspense>
     </div>
   ),

@@ -82,6 +82,22 @@ export function useGetUserMessages() {
   });
 }
 
+// Ticket-scoped chat messages — uses getChatMessages(ticketId) for proper history
+export function useGetChatMessages(ticketId: bigint | null) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ChatMessage[]>({
+    queryKey: ['chatMessages', ticketId?.toString()],
+    queryFn: async () => {
+      if (!actor || ticketId === null) return [];
+      return actor.getChatMessages(ticketId);
+    },
+    enabled: !!actor && !isFetching && ticketId !== null,
+    refetchInterval: 1500,
+    staleTime: 0,
+  });
+}
+
 export function useGetMessagesBetweenUsers(user1: Principal | null, user2: Principal | null) {
   const { actor, isFetching } = useActor();
 
@@ -116,6 +132,38 @@ export function useSendMessage() {
   });
 }
 
+// Send a message scoped to a specific support ticket
+export function useSendMessageForTicket() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      ticketId,
+      content,
+      attachment,
+    }: {
+      ticketId: bigint;
+      content: string;
+      attachment?: ExternalBlob | null;
+    }) => {
+      if (!actor) throw new Error('Actor not available');
+      const result = await actor.sendMessageForTicket(ticketId, content, attachment || null);
+      if (result.__kind__ === 'failed') {
+        throw new Error(result.failed);
+      }
+      return result;
+    },
+    onSuccess: (_data, variables) => {
+      // Invalidate the specific ticket's chat messages so they reload immediately
+      queryClient.invalidateQueries({ queryKey: ['chatMessages', variables.ticketId.toString()] });
+      queryClient.refetchQueries({ queryKey: ['chatMessages', variables.ticketId.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['userMessages'] });
+      queryClient.invalidateQueries({ queryKey: ['userTickets'] });
+    },
+  });
+}
+
 export function useMarkMessagesAsRead() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -130,6 +178,21 @@ export function useMarkMessagesAsRead() {
       queryClient.invalidateQueries({ queryKey: ['messagesBetween'] });
       queryClient.refetchQueries({ queryKey: ['userMessages'] });
       queryClient.refetchQueries({ queryKey: ['messagesBetween'] });
+    },
+  });
+}
+
+export function useMarkTicketMessagesAsRead() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ticketId: bigint) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.markTicketMessagesAsRead(ticketId);
+    },
+    onSuccess: (_data, ticketId) => {
+      queryClient.invalidateQueries({ queryKey: ['chatMessages', ticketId.toString()] });
     },
   });
 }

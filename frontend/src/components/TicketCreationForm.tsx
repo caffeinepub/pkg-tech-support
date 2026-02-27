@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Ticket } from 'lucide-react';
+import { Loader2, Ticket, AlertCircle } from 'lucide-react';
 import { useGetAllAvailableTechnicians } from '../hooks/useQueries';
 import { useActor } from '../hooks/useActor';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -19,14 +19,14 @@ interface TicketCreationFormProps {
 export default function TicketCreationForm({ onSuccess, onCancel }: TicketCreationFormProps) {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-  const { data: technicians } = useGetAllAvailableTechnicians();
+  const { data: technicians, isLoading: techLoading } = useGetAllAvailableTechnicians();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('Medium');
   const [selectedTechnician, setSelectedTechnician] = useState('');
   const [error, setError] = useState('');
 
-  const availableTechs = (technicians || []).filter(t => t.isAvailable);
+  const availableTechs = (technicians || []).filter((t) => t.isAvailable);
 
   const createTicketMutation = useMutation({
     mutationFn: async () => {
@@ -38,19 +38,33 @@ export default function TicketCreationForm({ onSuccess, onCancel }: TicketCreati
     },
     onSuccess: (ticket) => {
       queryClient.invalidateQueries({ queryKey: ['userTickets'] });
+      queryClient.refetchQueries({ queryKey: ['userTickets'] });
       onSuccess?.(ticket);
     },
     onError: (err: Error) => {
-      setError(err.message);
+      // Surface the backend error message directly — no payment gate on the frontend
+      const msg = err.message || 'Failed to create ticket. Please try again.';
+      setError(msg);
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!title.trim()) { setError('Title is required'); return; }
-    if (!description.trim()) { setError('Description is required'); return; }
-    if (!selectedTechnician) { setError('Please select an available technician'); return; }
+
+    if (!title.trim()) {
+      setError('Title is required');
+      return;
+    }
+    if (!description.trim()) {
+      setError('Description is required');
+      return;
+    }
+    if (!selectedTechnician) {
+      setError('Please select an available technician');
+      return;
+    }
+
     createTicketMutation.mutate();
   };
 
@@ -62,21 +76,23 @@ export default function TicketCreationForm({ onSuccess, onCancel }: TicketCreati
           id="ticket-title"
           placeholder="Brief description of the issue"
           value={title}
-          onChange={e => setTitle(e.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
           maxLength={200}
         />
       </div>
+
       <div className="space-y-2">
         <Label htmlFor="ticket-desc">Description</Label>
         <Textarea
           id="ticket-desc"
           placeholder="Detailed description of the problem..."
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onChange={(e) => setDescription(e.target.value)}
           rows={4}
           maxLength={2000}
         />
       </div>
+
       <div className="space-y-2">
         <Label>Priority</Label>
         <Select value={priority} onValueChange={setPriority}>
@@ -91,41 +107,66 @@ export default function TicketCreationForm({ onSuccess, onCancel }: TicketCreati
           </SelectContent>
         </Select>
       </div>
+
       <div className="space-y-2">
         <Label>Assign Technician</Label>
-        {availableTechs.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No technicians currently available</p>
+        {techLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading available technicians...
+          </div>
+        ) : availableTechs.length === 0 ? (
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2">
+            <AlertCircle className="h-4 w-4 text-warning flex-shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              No technicians are currently available. Please try again later.
+            </p>
+          </div>
         ) : (
           <Select value={selectedTechnician} onValueChange={setSelectedTechnician}>
             <SelectTrigger>
               <SelectValue placeholder="Select a technician" />
             </SelectTrigger>
             <SelectContent>
-              {availableTechs.map(tech => (
-                <SelectItem key={tech.technician.toString()} value={tech.technician.toString()}>
-                  {tech.technician.toString().slice(0, 20)}...
+              {availableTechs.map((tech) => (
+                <SelectItem
+                  key={tech.technician.toString()}
+                  value={tech.technician.toString()}
+                >
+                  Technician {tech.technician.toString().slice(0, 16)}…
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         )}
       </div>
+
       {error && (
         <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      <div className="flex gap-2 justify-end">
+
+      <div className="flex gap-2 justify-end pt-1">
         {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={createTicketMutation.isPending}>
             Cancel
           </Button>
         )}
-        <Button type="submit" disabled={createTicketMutation.isPending || availableTechs.length === 0}>
+        <Button
+          type="submit"
+          disabled={createTicketMutation.isPending || availableTechs.length === 0}
+          style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+        >
           {createTicketMutation.isPending ? (
-            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating...
+            </>
           ) : (
-            <><Ticket className="w-4 h-4 mr-2" /> Create Ticket</>
+            <>
+              <Ticket className="w-4 h-4 mr-2" /> Create Ticket
+            </>
           )}
         </Button>
       </div>

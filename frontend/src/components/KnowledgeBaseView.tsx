@@ -1,229 +1,312 @@
-import React, { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Search, BookOpen, Eye, Tag, Plus, Edit } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  useGetAllKBArticles,
+  useSearchKBArticles,
+  useGetArticlesByCategory,
+  useGetKBArticle,
+} from '../hooks/useKnowledgeBase';
 import { KBArticle, KnowledgeCategory } from '../backend';
-import { useGetAllKBArticles, useSearchKBArticles } from '../hooks/useKnowledgeBase';
+import { Search, BookOpen, Plus, Loader2, Tag } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import KBArticleDetail from './KBArticleDetail';
 import KBArticleEditor from './KBArticleEditor';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useIsCallerAdmin } from '../hooks/useQueries';
 
-interface KnowledgeBaseViewProps {
-  isAdmin?: boolean;
-}
-
-const categoryLabels: Record<string, string> = {
-  PrintersPeripherals: 'Printers & Peripherals',
-  NetworkConnectivity: 'Network & Connectivity',
-  AccountPasswords: 'Account & Passwords',
-  HardwareSupport: 'Hardware Support',
-  SoftwareSupport: 'Software Support',
-  GeneralSupport: 'General Support',
-  WindowsSupport: 'Windows Support',
+const CATEGORY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  [KnowledgeCategory.PrintersPeripherals]: {
+    label: 'Printers & Peripherals',
+    color: 'var(--primary)',
+    bg: 'oklch(0.52 0.18 195 / 0.12)',
+  },
+  [KnowledgeCategory.NetworkConnectivity]: {
+    label: 'Network & Connectivity',
+    color: 'var(--secondary)',
+    bg: 'oklch(0.55 0.16 265 / 0.12)',
+  },
+  [KnowledgeCategory.AccountPasswords]: {
+    label: 'Accounts & Passwords',
+    color: 'var(--warning)',
+    bg: 'oklch(0.70 0.20 45 / 0.12)',
+  },
+  [KnowledgeCategory.HardwareSupport]: {
+    label: 'Hardware Support',
+    color: 'var(--destructive)',
+    bg: 'oklch(0.55 0.22 25 / 0.12)',
+  },
+  [KnowledgeCategory.SoftwareSupport]: {
+    label: 'Software Support',
+    color: 'var(--success)',
+    bg: 'oklch(0.58 0.18 145 / 0.12)',
+  },
+  [KnowledgeCategory.GeneralSupport]: {
+    label: 'General Support',
+    color: 'var(--accent)',
+    bg: 'oklch(0.72 0.18 55 / 0.12)',
+  },
+  [KnowledgeCategory.WindowsSupport]: {
+    label: 'Windows Support',
+    color: 'var(--primary)',
+    bg: 'oklch(0.52 0.18 195 / 0.12)',
+  },
 };
 
-const categoryColors: Record<string, string> = {
-  PrintersPeripherals: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
-  NetworkConnectivity: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  AccountPasswords: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-  HardwareSupport: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
-  SoftwareSupport: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  GeneralSupport: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
-  WindowsSupport: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
-};
+// Inner component that fetches and renders the article detail
+function ArticleDetailLoader({
+  articleId,
+  onBack,
+  onEdit,
+  isAdmin,
+}: {
+  articleId: bigint;
+  onBack: () => void;
+  onEdit: (article: KBArticle) => void;
+  isAdmin: boolean;
+}) {
+  const { data: article, isLoading } = useGetKBArticle(articleId);
 
-// KnowledgeCategory is a TypeScript enum — use String() to get the key
-function getCategoryKey(category: KnowledgeCategory): string {
-  return String(category);
-}
-
-export default function KnowledgeBaseView({ isAdmin }: KnowledgeBaseViewProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [selectedArticle, setSelectedArticle] = useState<KBArticle | null>(null);
-  const [showEditor, setShowEditor] = useState(false);
-  const [editingArticle, setEditingArticle] = useState<KBArticle | null>(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 400);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  const { data: allArticles, isLoading } = useGetAllKBArticles();
-  const { data: searchResults, isLoading: isSearching } = useSearchKBArticles(debouncedSearch);
-
-  const articles = debouncedSearch.trim() ? (searchResults || []) : (allArticles || []);
-  const filtered =
-    categoryFilter === 'all'
-      ? articles
-      : articles.filter((a) => getCategoryKey(a.category) === categoryFilter);
-
-  if (selectedArticle) {
+  if (isLoading) {
     return (
-      <KBArticleDetail
-        article={selectedArticle}
-        isAdmin={isAdmin}
-        onBack={() => setSelectedArticle(null)}
-        onEdit={(a) => {
-          setEditingArticle(a);
-          setShowEditor(true);
-          setSelectedArticle(null);
-        }}
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
+      </div>
+    );
+  }
+
+  if (!article) {
+    return (
+      <div className="text-center py-12" style={{ color: 'var(--muted-foreground)' }}>
+        <p>Article not found.</p>
+        <button onClick={onBack} className="mt-4 underline text-sm" style={{ color: 'var(--primary)' }}>
+          Back to Knowledge Base
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <KBArticleDetail
+      article={article}
+      isAdmin={isAdmin}
+      onBack={onBack}
+      onEdit={onEdit}
+    />
+  );
+}
+
+export default function KnowledgeBaseView() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<KnowledgeCategory | null>(null);
+  const [selectedArticleId, setSelectedArticleId] = useState<bigint | null>(null);
+  const [editingArticle, setEditingArticle] = useState<KBArticle | null>(null);
+  const [showEditor, setShowEditor] = useState(false);
+
+  const { identity } = useInternetIdentity();
+  const { data: isAdmin } = useIsCallerAdmin();
+
+  const { data: allArticles, isLoading: loadingAll } = useGetAllKBArticles();
+  const { data: searchResults, isLoading: loadingSearch } = useSearchKBArticles(searchTerm);
+  const { data: categoryArticles, isLoading: loadingCategory } = useGetArticlesByCategory(selectedCategory);
+
+  const isLoading = searchTerm
+    ? loadingSearch
+    : selectedCategory
+    ? loadingCategory
+    : loadingAll;
+
+  const articles = searchTerm
+    ? (searchResults || [])
+    : selectedCategory
+    ? (categoryArticles || [])
+    : (allArticles || []);
+
+  const handleEditArticle = (article: KBArticle) => {
+    setEditingArticle(article);
+    setShowEditor(true);
+    setSelectedArticleId(null);
+  };
+
+  const handleEditorClose = () => {
+    setShowEditor(false);
+    setEditingArticle(null);
+  };
+
+  // Show article detail
+  if (selectedArticleId !== null) {
+    return (
+      <ArticleDetailLoader
+        articleId={selectedArticleId}
+        onBack={() => setSelectedArticleId(null)}
+        onEdit={handleEditArticle}
+        isAdmin={!!identity && !!isAdmin}
       />
     );
   }
 
+  // Show article editor
   if (showEditor) {
     return (
       <KBArticleEditor
         article={editingArticle}
-        onSuccess={() => {
-          setShowEditor(false);
-          setEditingArticle(null);
-        }}
-        onCancel={() => {
-          setShowEditor(false);
-          setEditingArticle(null);
-        }}
+        onSuccess={handleEditorClose}
+        onCancel={handleEditorClose}
       />
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-primary" />
-            Knowledge Base
-          </h2>
-          <p className="text-muted-foreground text-sm mt-1">
-            Find answers to common IT support questions
-          </p>
-        </div>
-        {isAdmin && (
-          <Button
-            onClick={() => {
-              setEditingArticle(null);
-              setShowEditor(true);
-            }}
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
           >
-            <Plus className="w-4 h-4 mr-2" /> New Article
-          </Button>
+            <BookOpen className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-display font-bold" style={{ color: 'var(--foreground)' }}>
+              Knowledge Base
+            </h2>
+            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+              {articles.length} article{articles.length !== 1 ? 's' : ''} available
+            </p>
+          </div>
+        </div>
+        {identity && isAdmin && (
+          <button
+            onClick={() => { setEditingArticle(null); setShowEditor(true); }}
+            className="btn-primary"
+          >
+            <Plus className="w-4 h-4" />
+            New Article
+          </button>
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search articles..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-full sm:w-52">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {Object.entries(categoryLabels).map(([key, label]) => (
-              <SelectItem key={key} value={key}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Search */}
+      <div className="relative">
+        <Search
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+          style={{ color: 'var(--muted-foreground)' }}
+        />
+        <Input
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setSelectedCategory(null);
+          }}
+          placeholder="Search articles..."
+          className="pl-10 rounded-xl border-2 h-11"
+          style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
+        />
       </div>
 
-      {isLoading || isSearching ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-40 rounded-xl" />
-          ))}
+      {/* Category filters */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setSelectedCategory(null)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105"
+          style={
+            selectedCategory === null
+              ? { background: 'var(--primary)', color: 'var(--primary-foreground)' }
+              : { background: 'var(--muted)', color: 'var(--muted-foreground)' }
+          }
+        >
+          <Tag className="w-3.5 h-3.5" />
+          All
+        </button>
+        {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
+          <button
+            key={key}
+            onClick={() => {
+              setSelectedCategory(key as KnowledgeCategory);
+              setSearchTerm('');
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105"
+            style={
+              selectedCategory === key
+                ? { background: cfg.color, color: 'var(--primary-foreground)' }
+                : { background: 'var(--muted)', color: 'var(--muted-foreground)' }
+            }
+          >
+            {cfg.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Articles grid */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
-          <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-20" />
-          <p className="text-lg font-medium">No articles found</p>
-          <p className="text-sm">
-            {debouncedSearch
-              ? `No results for "${debouncedSearch}"`
-              : 'No articles in this category yet'}
+      ) : articles.length === 0 ? (
+        <div
+          className="rounded-2xl border-2 p-12 text-center"
+          style={{ borderColor: 'var(--border)', background: 'var(--card)' }}
+        >
+          <BookOpen className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--muted-foreground)' }} />
+          <p className="font-semibold text-lg" style={{ color: 'var(--foreground)' }}>
+            No articles found
+          </p>
+          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
+            {searchTerm
+              ? `No results for "${searchTerm}"`
+              : 'No articles in this category yet.'}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((article) => {
-            const catKey = getCategoryKey(article.category);
+          {articles.map((article) => {
+            const catKey = String(article.category);
+            const cfg = CATEGORY_CONFIG[catKey] || {
+              label: catKey,
+              color: 'var(--primary)',
+              bg: 'oklch(0.52 0.18 195 / 0.12)',
+            };
             return (
-              <Card
+              <button
                 key={article.id.toString()}
-                className="cursor-pointer hover:shadow-lg transition-all hover:-translate-y-0.5 group"
-                onClick={() => setSelectedArticle(article)}
+                onClick={() => setSelectedArticleId(article.id)}
+                className="text-left rounded-2xl border-2 p-5 transition-all duration-200 hover:scale-[1.02] hover:shadow-card-hover interactive-card"
+                style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = cfg.color;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)';
+                }}
               >
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        categoryColors[catKey] || 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {categoryLabels[catKey] || catKey}
-                    </span>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Eye className="w-3 h-3" />
-                      {article.viewCount.toString()}
-                    </div>
-                  </div>
-                  <CardTitle className="text-base group-hover:text-primary transition-colors line-clamp-2">
-                    {article.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-3">
-                    {article.body.slice(0, 150)}
-                    {article.body.length > 150 ? '...' : ''}
-                  </p>
-                  {article.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-3">
-                      {article.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="flex items-center gap-0.5 text-xs bg-muted px-2 py-0.5 rounded-full"
-                        >
-                          <Tag className="w-2.5 h-2.5" />
-                          {tag}
-                        </span>
-                      ))}
-                      {article.tags.length > 3 && (
-                        <span className="text-xs text-muted-foreground">
-                          +{article.tags.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {isAdmin && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-2 w-full opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingArticle(article);
-                        setShowEditor(true);
-                      }}
-                    >
-                      <Edit className="w-3 h-3 mr-1" /> Edit
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
+                <div
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold mb-3"
+                  style={{ background: cfg.bg, color: cfg.color }}
+                >
+                  {cfg.label}
+                </div>
+                <h3
+                  className="font-display font-bold text-base mb-2 line-clamp-2"
+                  style={{ color: 'var(--foreground)' }}
+                >
+                  {article.title}
+                </h3>
+                <p
+                  className="text-sm line-clamp-3 mb-3"
+                  style={{ color: 'var(--muted-foreground)' }}
+                >
+                  {article.body.substring(0, 120)}
+                  {article.body.length > 120 ? '...' : ''}
+                </p>
+                <div
+                  className="flex items-center justify-between text-xs"
+                  style={{ color: 'var(--muted-foreground)' }}
+                >
+                  <span>{Number(article.viewCount)} views</span>
+                  <span>
+                    {new Date(Number(article.createdAt) / 1_000_000).toLocaleDateString()}
+                  </span>
+                </div>
+              </button>
             );
           })}
         </div>

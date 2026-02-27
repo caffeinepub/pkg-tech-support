@@ -176,6 +176,7 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getChatFeedback(sessionId: bigint): Promise<ChatFeedback | null>;
+    getChatMessages(ticketId: bigint): Promise<Array<ChatMessage>>;
     getKBArticle(articleId: bigint): Promise<KBArticle | null>;
     getLoginEvents(): Promise<Array<LoginEvent>>;
     getLoginEventsCSV(): Promise<string>;
@@ -192,9 +193,11 @@ export interface backendInterface {
     isCallerAdmin(): Promise<boolean>;
     isStripeConfigured(): Promise<boolean>;
     markMessagesAsRead(user1: Principal, user2: Principal): Promise<void>;
+    markTicketMessagesAsRead(ticketId: bigint): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     searchKBArticles(searchTerm: string): Promise<Array<KBArticle>>;
     sendMessage(recipient: Principal, content: string, attachment: ExternalBlob | null): Promise<MessageStatus>;
+    sendMessageForTicket(ticketId: bigint, content: string, attachment: ExternalBlob | null): Promise<MessageStatus>;
     setAllTechniciansOffline(): Promise<void>;
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
     setTechnicianAvailability(isAvailable: boolean): Promise<void>;

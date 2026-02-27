@@ -1,161 +1,75 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-26T06:23:51.379Z",
+  "generatedAt": "2026-02-27T18:02:43.352Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 5,
+    "total": 4,
+    "implemented": 3,
     "items": [
       {
-        "id": "REQ-2",
-        "summary": "Implement a full ticketing system with support for ticket creation via form, priority levels (Low, Medium, High, Critical), SLA tracking (response and resolution time targets per priority), status updates (Open, In Progress, Pending, Resolved, Closed), and email-style notification display within the UI. Store ticket data in the backend actor with fields for id, title, description, priority, status, SLA deadlines, assignee, and timestamps.",
+        "id": "REQ-17",
+        "summary": "Fix the ChatSection component so that customers can see the full chat message history for their active support sessions. Ensure that when a customer selects a ticket or opens a chat session, all previously exchanged messages are fetched from the backend and displayed in chronological order in the chat UI. Debug and resolve any query filtering, principal mismatch, or data-fetching issues that prevent message history from rendering on the customer side.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/TicketCreationForm.tsx",
-          "frontend/src/components/TicketListView.tsx",
-          "frontend/src/components/TicketDetailView.tsx",
-          "frontend/src/hooks/useTickets.ts",
-          "frontend/src/components/CustomerDashboard.tsx",
-          "frontend/src/components/ExpertDashboard.tsx",
-          "frontend/src/components/SLAIndicator.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/components/ChatSection.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/TicketCreationForm.tsx",
-          "frontend/src/components/TicketListView.tsx",
-          "frontend/src/components/TicketDetailView.tsx",
-          "frontend/src/hooks/useTickets.ts",
-          "frontend/src/components/CustomerDashboard.tsx",
-          "frontend/src/components/ExpertDashboard.tsx",
-          "frontend/src/components/SLAIndicator.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/components/ChatSection.tsx"
         ]
       },
       {
-        "id": "REQ-3",
-        "summary": "Enhance the existing AIAssistantChat component to act as a first-response AI bot capable of answering common IT FAQs (printer issues, Windows troubleshooting, password resets, network connectivity) using an expanded keyword-matching knowledge base, and provide a 'Hand off to human agent' escalation action that creates a support ticket and routes the user to a live technician session.",
+        "id": "REQ-18",
+        "summary": "Fix the ChatSection component so that customers can type and send reply messages in an active chat session. Ensure the message input field and send button are rendered and functional for customers (not just technicians). Debug and resolve any role-check, actor call, or state management issues that block customers from submitting new messages. After sending, the new message must appear immediately in the chat thread.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/AIAssistantChat.tsx",
-          "frontend/src/hooks/useTickets.ts",
-          "frontend/src/components/CustomerDashboard.tsx"
+          "frontend/src/components/ChatSection.tsx",
+          "frontend/src/hooks/useQueries.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/AIAssistantChat.tsx",
-          "frontend/src/hooks/useTickets.ts",
-          "frontend/src/components/CustomerDashboard.tsx"
+          "frontend/src/components/ChatSection.tsx",
+          "frontend/src/hooks/useQueries.ts"
         ]
       },
       {
-        "id": "REQ-4",
-        "summary": "Build a Knowledge Base section accessible from the main navigation. It must include a searchable library of self-service articles organized by categories (Printers & Peripherals, Windows Troubleshooting, Network & Connectivity, Account & Passwords, Hardware). Articles are stored in the backend with fields for id, title, category, body (rich text), tags, and view count. Display a search bar, category filter, article cards with excerpts, and a full article detail view.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/KnowledgeBaseView.tsx",
-          "frontend/src/components/KBArticleDetail.tsx",
-          "frontend/src/components/KBArticleEditor.tsx",
-          "frontend/src/hooks/useKnowledgeBase.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/components/Header.tsx",
-          "frontend/src/components/ExpertDashboard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/KnowledgeBaseView.tsx",
-          "frontend/src/components/KBArticleDetail.tsx",
-          "frontend/src/components/KBArticleEditor.tsx",
-          "frontend/src/hooks/useKnowledgeBase.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/components/Header.tsx",
-          "frontend/src/components/ExpertDashboard.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Build a Client Portal tab for authenticated customers showing: a list of all their tickets with status and priority badges, a service history timeline of resolved tickets, the ability to reopen or comment on existing tickets, and a payment section supporting Razorpay for purchasing support plans or paying for resolved incidents. The portal should be accessible from the CustomerDashboard.",
+        "id": "REQ-19",
+        "summary": "Remove all payment gate checks from the ticket creation flow in ClientPortal and TicketCreationForm. Customers must be able to open the ticket creation dialog and submit a new support ticket without any payment plan validation, Stripe/Razorpay checks, or subscription status checks blocking the action. The 'Create Ticket' button and dialog must be unconditionally accessible to any authenticated customer.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/ClientPortal.tsx",
-          "frontend/src/components/ServiceHistoryTimeline.tsx",
-          "frontend/src/components/TicketCommentSection.tsx",
-          "frontend/src/components/RazorpayPaymentSection.tsx",
-          "frontend/src/hooks/usePayments.ts",
-          "frontend/src/components/CustomerDashboard.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/components/TicketCreationForm.tsx"
         ],
         "matchedFiles": [
           "frontend/src/components/ClientPortal.tsx",
-          "frontend/src/components/ServiceHistoryTimeline.tsx",
-          "frontend/src/components/CustomerDashboard.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/components/TicketCreationForm.tsx"
         ]
       },
       {
-        "id": "REQ-6",
-        "summary": "Build an Analytics Dashboard tab visible only to admin/technician users within the ExpertDashboard. Display key metrics including: average first reply time per ticket, ticket resolution rate (resolved vs total), open ticket count by priority, agent performance table (tickets handled, avg resolution time per technician), and a daily ticket volume chart over the last 30 days. Compute metrics from existing ticket and message data stored in the backend.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/AnalyticsDashboard.tsx",
-          "frontend/src/components/MetricCard.tsx",
-          "frontend/src/components/AgentPerformanceTable.tsx",
-          "frontend/src/components/TicketVolumeChart.tsx",
-          "frontend/src/components/OpenTicketsByPriorityChart.tsx",
-          "frontend/src/hooks/useAnalytics.ts",
-          "frontend/src/components/ExpertDashboard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/AnalyticsDashboard.tsx",
-          "frontend/src/components/MetricCard.tsx",
-          "frontend/src/components/AgentPerformanceTable.tsx",
-          "frontend/src/components/TicketVolumeChart.tsx",
-          "frontend/src/components/OpenTicketsByPriorityChart.tsx",
-          "frontend/src/hooks/useAnalytics.ts",
-          "frontend/src/components/ExpertDashboard.tsx"
-        ]
+        "id": "REQ-20",
+        "summary": "Audit the backend `main.mo` actor for any authorization checks on `getChatMessages`, `sendMessage`, or equivalent chat query/update functions that incorrectly restrict customer principals from reading or writing their own chat messages. Ensure that customers can call these functions for sessions linked to their own tickets, while preventing access to other customers' sessions. Fix any overly restrictive or missing principal-based access control that causes the chat history and reply issues.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
-    "build-template/README.md",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/AIAssistantChat.tsx",
-    "frontend/src/components/AgentPerformanceTable.tsx",
-    "frontend/src/components/AnalyticsDashboard.tsx",
     "frontend/src/components/ChatSection.tsx",
     "frontend/src/components/ClientPortal.tsx",
-    "frontend/src/components/CustomerDashboard.tsx",
-    "frontend/src/components/ExpertDashboard.tsx",
-    "frontend/src/components/FloatingAIChatButton.tsx",
-    "frontend/src/components/Header.tsx",
-    "frontend/src/components/KBArticleDetail.tsx",
-    "frontend/src/components/KBArticleEditor.tsx",
-    "frontend/src/components/KnowledgeBaseView.tsx",
-    "frontend/src/components/MainContent.tsx",
-    "frontend/src/components/MetricCard.tsx",
-    "frontend/src/components/OpenTicketsByPriorityChart.tsx",
-    "frontend/src/components/SLAIndicator.tsx",
-    "frontend/src/components/ServiceHistoryTimeline.tsx",
     "frontend/src/components/TicketCreationForm.tsx",
-    "frontend/src/components/TicketDetailView.tsx",
-    "frontend/src/components/TicketListView.tsx",
-    "frontend/src/components/TicketVolumeChart.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useAnalytics.ts",
-    "frontend/src/hooks/useKnowledgeBase.ts",
-    "frontend/src/hooks/useTickets.ts",
+    "frontend/src/hooks/useQueries.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

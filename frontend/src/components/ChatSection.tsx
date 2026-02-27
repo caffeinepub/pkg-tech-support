@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { useGetUserMessages, useGetUserTickets, useSendMessage, useSetTechnicianAvailability } from '../hooks/useQueries';
-import { useGetCallerUserProfile } from '../hooks/useQueries';
+import {
+  useGetUserTickets,
+  useGetChatMessages,
+  useSendMessageForTicket,
+  useSetTechnicianAvailability,
+  useGetCallerUserProfile,
+} from '../hooks/useQueries';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,8 +13,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Send, User, Clock } from 'lucide-react';
-import { ChatMessage, SupportTicket, TicketStatusOld } from '../backend';
+import { Send, User, Clock, MessageCircle, RefreshCw } from 'lucide-react';
+import { SupportTicket, TicketStatusOld } from '../backend';
 import { toast } from 'sonner';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 
@@ -18,49 +23,77 @@ export default function ChatSection() {
   const currentPrincipal = identity?.getPrincipal().toString();
   const { data: userProfile } = useGetCallerUserProfile();
 
-  const { data: messages = [], isLoading: messagesLoading } = useGetUserMessages();
   const { data: tickets = [], isLoading: ticketsLoading } = useGetUserTickets();
-  const sendMessage = useSendMessage();
-  const setAvailability = useSetTechnicianAvailability();
-
-  const [messageContent, setMessageContent] = useState('');
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [messageContent, setMessageContent] = useState('');
   const [isAvailable, setIsAvailable] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const selectedTicketId = selectedTicket?.ticketId ?? null;
+
+  // Fetch messages scoped to the selected ticket using getChatMessages(ticketId)
+  const {
+    data: ticketMessages = [],
+    isLoading: messagesLoading,
+    error: messagesError,
+    refetch: refetchMessages,
+  } = useGetChatMessages(selectedTicketId);
+
+  const sendMessageForTicket = useSendMessageForTicket();
+  const setAvailability = useSetTechnicianAvailability();
+
+  // Auto-select first ticket when tickets load
   useEffect(() => {
     if (tickets.length > 0 && !selectedTicket) {
       setSelectedTicket(tickets[0]);
     }
   }, [tickets, selectedTicket]);
 
+  // Keep selectedTicket in sync with latest data from the tickets list
+  useEffect(() => {
+    if (selectedTicket && tickets.length > 0) {
+      const updated = tickets.find(
+        (t) => t.ticketId.toString() === selectedTicket.ticketId.toString()
+      );
+      if (updated) {
+        setSelectedTicket(updated);
+      }
+    }
+  }, [tickets]);
+
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, selectedTicket]);
+  }, [ticketMessages]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!messageContent.trim() || !selectedTicket) {
+    if (!messageContent.trim()) {
       toast.error('Please enter a message');
       return;
     }
 
-    const recipient = userProfile?.isTechnician
-      ? selectedTicket.customer
-      : selectedTicket.technician;
+    if (!selectedTicket) {
+      toast.error('Please select a ticket first');
+      return;
+    }
+
+    if (selectedTicket.status === TicketStatusOld.resolved) {
+      toast.error('Cannot send messages on a resolved ticket');
+      return;
+    }
 
     try {
-      await sendMessage.mutateAsync({
-        recipient,
+      await sendMessageForTicket.mutateAsync({
+        ticketId: selectedTicket.ticketId,
         content: messageContent.trim(),
       });
       setMessageContent('');
-    } catch (error) {
-      toast.error('Failed to send message');
-      console.error(error);
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to send message');
     }
   };
 
@@ -71,25 +104,16 @@ export default function ChatSection() {
       toast.success(checked ? 'You are now available' : 'You are now offline');
     } catch (error) {
       toast.error('Failed to update availability');
-      console.error(error);
     }
   };
 
-  const getTicketMessages = (ticket: SupportTicket): ChatMessage[] => {
-    return messages
-      .filter(
-        (msg) =>
-          (msg.sender.toString() === ticket.customer.toString() &&
-            msg.recipient.toString() === ticket.technician.toString()) ||
-          (msg.sender.toString() === ticket.technician.toString() &&
-            msg.recipient.toString() === ticket.customer.toString())
-      )
-      .sort((a, b) => Number(a.timestamp - b.timestamp));
+  const formatTime = (timestamp: bigint) => {
+    const date = new Date(Number(timestamp) / 1_000_000);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const formatTime = (timestamp: bigint) => {
-    const date = new Date(Number(timestamp) / 1000000);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formatDate = (timestamp: bigint) => {
+    return new Date(Number(timestamp) / 1_000_000).toLocaleDateString();
   };
 
   const getStatusColor = (status: TicketStatusOld) => {
@@ -106,13 +130,15 @@ export default function ChatSection() {
     return 'Unknown';
   };
 
-  if (messagesLoading || ticketsLoading) {
+  const isResolved = selectedTicket?.status === TicketStatusOld.resolved;
+
+  if (ticketsLoading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading chat...</p>
+            <p className="text-muted-foreground">Loading tickets...</p>
           </div>
         </CardContent>
       </Card>
@@ -123,15 +149,18 @@ export default function ChatSection() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Support Chat</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <MessageCircle className="w-5 h-5" style={{ color: 'var(--primary)' }} />
+            Support Chat
+          </CardTitle>
           <CardDescription>
             {userProfile?.isTechnician
               ? 'No active support tickets. Wait for customers to create tickets.'
-              : 'No active support tickets. Contact a technician to get started.'}
+              : 'No active support tickets. Please create a support ticket from the My Portal tab to start chatting with a technician.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12">
+          <div className="text-center py-8">
             <img
               src="/assets/generated/support-technician.dim_400x300.jpg"
               alt="Support"
@@ -140,7 +169,7 @@ export default function ChatSection() {
             <p className="text-muted-foreground mb-4">
               {userProfile?.isTechnician
                 ? 'You will see tickets here when customers need help'
-                : 'Create a support ticket to start chatting with a technician'}
+                : 'Once you have an active support ticket, you can chat directly with your assigned technician here.'}
             </p>
           </div>
         </CardContent>
@@ -148,7 +177,10 @@ export default function ChatSection() {
     );
   }
 
-  const ticketMessages = selectedTicket ? getTicketMessages(selectedTicket) : [];
+  // Sort messages chronologically
+  const sortedMessages = [...ticketMessages].sort(
+    (a, b) => Number(a.timestamp) - Number(b.timestamp)
+  );
 
   return (
     <div className="grid md:grid-cols-3 gap-6">
@@ -156,6 +188,7 @@ export default function ChatSection() {
       <Card className="md:col-span-1">
         <CardHeader>
           <CardTitle className="text-lg">Support Tickets</CardTitle>
+          {/* Availability toggle: only shown to technicians */}
           {userProfile?.isTechnician && (
             <div className="flex items-center space-x-2 pt-2">
               <Switch
@@ -177,7 +210,7 @@ export default function ChatSection() {
                   key={ticket.ticketId.toString()}
                   onClick={() => setSelectedTicket(ticket)}
                   className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                    selectedTicket?.ticketId === ticket.ticketId
+                    selectedTicket?.ticketId.toString() === ticket.ticketId.toString()
                       ? 'bg-primary/10 border-primary'
                       : 'bg-card hover:bg-muted border-border'
                   }`}
@@ -195,7 +228,7 @@ export default function ChatSection() {
                   </div>
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    {new Date(Number(ticket.createdAt) / 1000000).toLocaleDateString()}
+                    {formatDate(ticket.createdAt)}
                   </p>
                 </button>
               ))}
@@ -214,94 +247,151 @@ export default function ChatSection() {
                 {selectedTicket && `Ticket #${selectedTicket.ticketId.toString()}`}
               </CardDescription>
             </div>
-            {selectedTicket && (
-              <Badge className={`${getStatusColor(selectedTicket.status)} text-white`}>
-                {getStatusText(selectedTicket.status)}
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {selectedTicket && (
+                <Badge className={`${getStatusColor(selectedTicket.status)} text-white`}>
+                  {getStatusText(selectedTicket.status)}
+                </Badge>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => refetchMessages()}
+                title="Refresh messages"
+                className="h-8 w-8"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[400px] mb-4 pr-4" ref={scrollRef as React.RefObject<HTMLDivElement>}>
-            <div className="space-y-4">
-              {ticketMessages.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
+          {/* Messages area */}
+          <div
+            ref={scrollRef}
+            className="h-[380px] overflow-y-auto mb-4 pr-2 space-y-4"
+          >
+            {messagesLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Loading messages...</p>
                 </div>
-              ) : (
-                ticketMessages.map((msg) => {
-                  const isCurrentUser = msg.sender.toString() === currentPrincipal;
-                  return (
+              </div>
+            ) : messagesError ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <p className="text-sm text-destructive mb-2">Failed to load messages</p>
+                  <Button variant="outline" size="sm" onClick={() => refetchMessages()}>
+                    <RefreshCw className="h-3 w-3 mr-1" /> Retry
+                  </Button>
+                </div>
+              </div>
+            ) : sortedMessages.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center py-8">
+                  <MessageCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-40" />
+                  <p className="text-muted-foreground text-sm">
+                    No messages yet. Start the conversation!
+                  </p>
+                </div>
+              </div>
+            ) : (
+              sortedMessages.map((msg) => {
+                const isCurrentUser = msg.sender.toString() === currentPrincipal;
+                return (
+                  <div
+                    key={msg.messageId.toString()}
+                    className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                  >
                     <div
-                      key={msg.messageId.toString()}
-                      className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                      className={`max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                        isCurrentUser
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-br-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-bl-sm'
+                      }`}
                     >
-                      <div
-                        className={`max-w-[70%] rounded-lg p-3 shadow-sm ${
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <User
+                          className={`h-3 w-3 ${
+                            isCurrentUser
+                              ? 'text-emerald-700 dark:text-emerald-400'
+                              : 'text-slate-600 dark:text-slate-400'
+                          }`}
+                        />
+                        <span
+                          className={`text-xs font-semibold ${
+                            isCurrentUser
+                              ? 'text-emerald-700 dark:text-emerald-400'
+                              : 'text-slate-700 dark:text-slate-300'
+                          }`}
+                        >
+                          {isCurrentUser
+                            ? 'You'
+                            : userProfile?.isTechnician
+                            ? 'Customer'
+                            : 'Technician'}
+                        </span>
+                      </div>
+                      <p
+                        className={`text-sm leading-relaxed ${
                           isCurrentUser
-                            ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800'
-                            : 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700'
+                            ? 'text-emerald-900 dark:text-emerald-100'
+                            : 'text-slate-900 dark:text-slate-100'
                         }`}
                       >
-                        <div className="flex items-center gap-2 mb-1">
-                          <User
-                            className={`h-3 w-3 ${
-                              isCurrentUser
-                                ? 'text-emerald-700 dark:text-emerald-400'
-                                : 'text-slate-600 dark:text-slate-400'
-                            }`}
-                          />
-                          <span
-                            className={`text-xs font-medium ${
-                              isCurrentUser
-                                ? 'text-emerald-700 dark:text-emerald-400'
-                                : 'text-slate-700 dark:text-slate-300'
-                            }`}
-                          >
-                            {isCurrentUser
-                              ? 'You'
-                              : userProfile?.isTechnician
-                              ? 'Customer'
-                              : 'Technician'}
-                          </span>
-                        </div>
-                        <p
-                          className={`text-sm ${
-                            isCurrentUser
-                              ? 'text-emerald-900 dark:text-emerald-100'
-                              : 'text-slate-900 dark:text-slate-100'
-                          }`}
-                        >
-                          {msg.content}
-                        </p>
-                        <p
-                          className={`text-xs mt-1 ${
-                            isCurrentUser
-                              ? 'text-emerald-600 dark:text-emerald-500'
-                              : 'text-slate-500 dark:text-slate-400'
-                          }`}
-                        >
-                          {formatTime(msg.timestamp)}
-                        </p>
-                      </div>
+                        {msg.content}
+                      </p>
+                      <p
+                        className={`text-xs mt-1 text-right ${
+                          isCurrentUser
+                            ? 'text-emerald-600 dark:text-emerald-500'
+                            : 'text-slate-500 dark:text-slate-400'
+                        }`}
+                      >
+                        {formatTime(msg.timestamp)}
+                      </p>
                     </div>
-                  );
-                })
-              )}
-            </div>
-          </ScrollArea>
+                  </div>
+                );
+              })
+            )}
+          </div>
 
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <Input
-              placeholder="Type your message..."
-              value={messageContent}
-              onChange={(e) => setMessageContent(e.target.value)}
-              disabled={sendMessage.isPending || !selectedTicket}
-            />
-            <Button type="submit" disabled={sendMessage.isPending || !selectedTicket}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
+          {/* Message input — always visible for all authenticated users */}
+          {isResolved ? (
+            <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 text-center">
+              <p className="text-sm text-muted-foreground">
+                This ticket is resolved. You cannot send new messages.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSendMessage} className="flex gap-2">
+              <Input
+                placeholder="Type your message..."
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+                disabled={sendMessageForTicket.isPending || !selectedTicket}
+                className="flex-1"
+                autoComplete="off"
+              />
+              <Button
+                type="submit"
+                disabled={
+                  sendMessageForTicket.isPending ||
+                  !selectedTicket ||
+                  !messageContent.trim()
+                }
+                style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+              >
+                {sendMessageForTicket.isPending ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>

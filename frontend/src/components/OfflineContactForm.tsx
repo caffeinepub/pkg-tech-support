@@ -1,137 +1,143 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Mail, Phone, Clock, Send, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { Mail, Clock } from 'lucide-react';
 
-export default function OfflineContactForm() {
+interface OfflineContactFormProps {
+  onClose?: () => void;
+}
+
+export default function OfflineContactForm({ onClose }: OfflineContactFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [topic, setTopic] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!name.trim() || !email.trim() || !topic || !message.trim()) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    if (!email.includes('@')) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-
+    if (!name.trim() || !email.trim() || !message.trim()) return;
     setIsSubmitting(true);
-    
-    // Simulate submission (in real app, this would save to backend)
-    setTimeout(() => {
-      toast.success('Your inquiry has been submitted! We\'ll get back to you soon.');
-      setName('');
-      setEmail('');
-      setTopic('');
-      setMessage('');
-      setIsSubmitting(false);
-    }, 1000);
+    await new Promise((r) => setTimeout(r, 1000));
+    setIsSubmitting(false);
+    setSubmitted(true);
   };
 
-  return (
-    <Card className="max-w-2xl mx-auto bg-sky-50 dark:bg-sky-950 border-sky-200 dark:border-sky-800">
-      <CardHeader className="text-center">
-        <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-sky-100 dark:bg-sky-900 flex items-center justify-center">
-          <img 
-            src="/assets/generated/offline-support-icon.dim_64x64.png" 
-            alt="Offline" 
-            className="h-10 w-10"
-          />
+  if (submitted) {
+    return (
+      <div className="rounded-2xl border-2 p-8 text-center shadow-modal"
+        style={{ background: 'var(--modal-bg)', borderColor: 'var(--success)' }}>
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+          style={{ background: 'var(--success)', color: 'var(--success-foreground)' }}
+        >
+          <CheckCircle className="w-8 h-8" />
         </div>
-        <CardTitle className="text-gray-900 dark:text-gray-100">All Experts Are Currently Offline</CardTitle>
-        <CardDescription className="text-gray-700 dark:text-gray-300">
-          Leave your inquiry and we'll get back to you as soon as possible
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-6 p-4 bg-sky-100 dark:bg-sky-900 rounded-lg flex items-start gap-3">
-          <Clock className="h-5 w-5 text-gray-700 dark:text-gray-300 mt-0.5" />
-          <div className="text-sm">
-            <p className="font-medium mb-1 text-gray-900 dark:text-gray-100">Expected Response Time</p>
-            <p className="text-gray-700 dark:text-gray-300">
-              We typically respond within 2-4 hours during business hours (9 AM - 6 PM EST)
-            </p>
+        <h3 className="text-xl font-display font-bold mb-2" style={{ color: 'var(--foreground)' }}>
+          Message Sent!
+        </h3>
+        <p className="text-sm mb-4" style={{ color: 'var(--muted-foreground)' }}>
+          We'll get back to you within 24 hours at <strong>{email}</strong>
+        </p>
+        {onClose && (
+          <Button onClick={onClose} className="rounded-xl"
+            style={{ background: 'var(--success)', color: 'var(--success-foreground)' }}>
+            Close
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border-2 shadow-modal overflow-hidden"
+      style={{ background: 'var(--modal-bg)', borderColor: 'var(--warning)' }}>
+      {/* Header */}
+      <div className="px-6 py-4 flex items-center gap-3"
+        style={{ background: 'var(--warning)', color: 'var(--warning-foreground)' }}>
+        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+          <Mail className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="font-display font-bold text-lg">Leave a Message</h3>
+          <p className="text-sm opacity-90">All experts are currently offline</p>
+        </div>
+      </div>
+
+      <div className="px-6 py-5">
+        {/* Info badges */}
+        <div className="flex flex-wrap gap-3 mb-5">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border"
+            style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)', background: 'var(--card)' }}>
+            <Clock className="w-3.5 h-3.5" />
+            Response within 24 hours
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border"
+            style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)', background: 'var(--card)' }}>
+            <Phone className="w-3.5 h-3.5" />
+            praveenjaexperts@gmail.com
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="offline-name" className="text-gray-900 dark:text-gray-100">Name *</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Name</Label>
               <Input
-                id="offline-name"
-                placeholder="Your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
                 required
-                className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-500"
+                className="rounded-xl border-2"
+                style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="offline-email" className="text-gray-900 dark:text-gray-100">Email *</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Email</Label>
               <Input
-                id="offline-email"
                 type="email"
-                placeholder="your.email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
                 required
-                className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-500"
+                className="rounded-xl border-2"
+                style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="offline-topic" className="text-gray-900 dark:text-gray-100">Issue Category *</Label>
-            <Select value={topic} onValueChange={setTopic} required>
-              <SelectTrigger id="offline-topic" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hardware">Hardware Issues</SelectItem>
-                <SelectItem value="software">Software Problems</SelectItem>
-                <SelectItem value="network">Network & Connectivity</SelectItem>
-                <SelectItem value="performance">Performance Issues</SelectItem>
-                <SelectItem value="virus">Virus & Security</SelectItem>
-                <SelectItem value="setup">Setup & Installation</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="offline-message" className="text-gray-900 dark:text-gray-100">Describe Your Issue *</Label>
-            <Textarea
-              id="offline-message"
-              placeholder="Please provide details about your technical issue..."
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Message</Label>
+            <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              rows={6}
+              placeholder="Describe your technical issue in detail..."
+              rows={4}
               required
-              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-500"
+              className="w-full px-3 py-2.5 text-sm rounded-xl border-2 resize-none outline-none transition-colors focus:border-primary"
+              style={{
+                background: 'var(--card)',
+                borderColor: 'var(--border)',
+                color: 'var(--foreground)',
+              }}
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            <Mail className="h-4 w-4 mr-2" />
-            {isSubmitting ? 'Submitting...' : 'Submit Inquiry'}
+          <Button
+            type="submit"
+            disabled={isSubmitting || !name.trim() || !email.trim() || !message.trim()}
+            className="w-full rounded-xl py-3 font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+            style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+          >
+            {isSubmitting ? (
+              <><Loader2 className="w-4 h-4 animate-spin mr-2" />Sending...</>
+            ) : (
+              <><Send className="w-4 h-4 mr-2" />Send Message</>
+            )}
           </Button>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -1,198 +1,167 @@
-import { MessageSquare, CreditCard, Headphones, UserCircle, Wrench, Shield, Zap, Bot, Sparkles } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Badge } from '@/components/ui/badge';
+import { MessageCircle, Shield, CreditCard, Bot, ArrowRight, Zap, Star } from 'lucide-react';
 
 export default function LoginPrompt() {
   const navigate = useNavigate();
 
+  const features = [
+    {
+      icon: MessageCircle,
+      title: 'Real-Time Chat',
+      description: 'Connect instantly with certified IT experts for immediate assistance.',
+      color: 'var(--primary)',
+      bg: 'oklch(0.52 0.18 195 / 0.1)',
+    },
+    {
+      icon: Shield,
+      title: 'Expert Technicians',
+      description: 'Certified professionals ready to solve your technical challenges.',
+      color: 'var(--secondary)',
+      bg: 'oklch(0.55 0.16 265 / 0.1)',
+    },
+    {
+      icon: CreditCard,
+      title: 'Secure Payments',
+      description: 'Safe and transparent billing with multiple payment options.',
+      color: 'var(--success)',
+      bg: 'oklch(0.58 0.18 145 / 0.1)',
+    },
+    {
+      icon: Bot,
+      title: 'AI Assistant',
+      description: '24/7 AI-powered support for instant answers to common issues.',
+      color: 'var(--accent)',
+      bg: 'oklch(0.72 0.18 55 / 0.1)',
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 dark:from-gray-900 dark:via-blue-950 dark:to-cyan-950 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
-        <img 
-          src="/assets/generated/premium-gradient-background.dim_1200x600.png" 
-          alt="" 
-          className="w-full h-full object-cover"
-          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--background)' }}>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
+            opacity: 0.08,
+          }}
         />
+        <div className="relative max-w-6xl mx-auto px-4 py-20 text-center">
+          {/* Badge */}
+          <div
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-6 border"
+            style={{
+              background: 'oklch(0.52 0.18 195 / 0.12)',
+              borderColor: 'oklch(0.52 0.18 195 / 0.3)',
+              color: 'var(--primary)',
+            }}
+          >
+            <Star className="w-4 h-4" />
+            Professional IT Support Platform
+          </div>
+
+          <h1
+            className="text-5xl md:text-6xl font-display font-bold mb-6 leading-tight"
+            style={{ color: 'var(--foreground)' }}
+          >
+            Expert Tech Support
+            <br />
+            <span style={{ color: 'var(--primary)' }}>When You Need It</span>
+          </h1>
+
+          <p className="text-xl max-w-2xl mx-auto mb-10" style={{ color: 'var(--muted-foreground)' }}>
+            Connect with certified IT professionals for instant, reliable technical assistance.
+            Fast, secure, and always available.
+          </p>
+
+          {/* CTA Button */}
+          <button
+            onClick={() => navigate({ to: '/customer-login' })}
+            className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl text-lg font-bold transition-all duration-200 hover:scale-105 active:scale-95 shadow-primary"
+            style={{
+              background: 'var(--primary)',
+              color: 'var(--primary-foreground)',
+              boxShadow: '0 8px 32px oklch(0.52 0.18 195 / 0.35)',
+            }}
+          >
+            <Zap className="w-5 h-5" />
+            Get Support Now
+            <ArrowRight className="w-5 h-5" />
+          </button>
+
+          <p className="mt-4 text-sm" style={{ color: 'var(--muted-foreground)' }}>
+            No account needed to browse · Secure login with Internet Identity
+          </p>
+        </div>
       </div>
-      
-      <div className="container py-12 md:py-24 relative z-10">
-        <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <div className="mb-8 relative">
-              <img
-                src="/assets/generated/tech-setup.dim_600x400.jpg"
-                alt="Technical Support"
-                className="mx-auto rounded-2xl shadow-2xl max-w-full h-auto border-4 border-white dark:border-gray-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-blue-900/70 via-cyan-900/50 to-transparent rounded-2xl flex items-end justify-center pb-8">
-                <div className="text-white text-center">
-                  <h1 className="text-4xl md:text-5xl font-bold mb-2 drop-shadow-lg">
-                    PKG Tech Support
-                  </h1>
-                  <p className="text-lg md:text-xl drop-shadow-lg">
-                    Professional Support at Your Fingertips
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-700 via-cyan-700 to-teal-700 dark:from-blue-300 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">
-              Professional Technical Support for Your Devices
-            </h2>
-            <p className="text-lg text-blue-700 dark:text-blue-300 mb-4">
-              Get expert help for your laptop and desktop issues. Connect with certified technicians in real-time.
-            </p>
-            <Badge className="bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 font-bold px-4 py-2 text-sm shadow-lg">
-              <Bot className="h-4 w-4 mr-2" />
-              NEW: AI Assistant Available 24/7
-              <Sparkles className="h-4 w-4 ml-2 animate-pulse" />
-            </Badge>
-          </div>
 
-          <div className="grid md:grid-cols-4 gap-6 mb-12">
-            <Card className="border-2 border-blue-200 dark:border-blue-800 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-xl transition-all hover:-translate-y-1">
-              <CardContent className="pt-6">
-                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <MessageSquare className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="font-semibold mb-2 text-center text-blue-800 dark:text-blue-200">Real-Time Chat</h3>
-                <p className="text-sm text-center text-blue-700 dark:text-blue-300">
-                  Connect instantly with support technicians through our live chat interface
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 border-cyan-200 dark:border-cyan-800 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-xl transition-all hover:-translate-y-1">
-              <CardContent className="pt-6">
-                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-cyan-500 via-teal-500 to-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Headphones className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="font-semibold mb-2 text-center text-cyan-800 dark:text-cyan-200">Expert Technicians</h3>
-                <p className="text-sm text-center text-cyan-700 dark:text-cyan-300">
-                  Certified professionals ready to solve your technical problems
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 border-teal-200 dark:border-teal-800 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-xl transition-all hover:-translate-y-1">
-              <CardContent className="pt-6">
-                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-teal-500 via-emerald-500 to-green-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <CreditCard className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="font-semibold mb-2 text-center text-teal-800 dark:text-teal-200">Secure Payments</h3>
-                <p className="text-sm text-center text-teal-700 dark:text-teal-300">
-                  Pay safely for support services with integrated payment processing
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 border-blue-300 dark:border-blue-700 bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/50 dark:to-cyan-900/50 backdrop-blur-sm hover:shadow-xl transition-all hover:-translate-y-1 relative overflow-hidden">
-              <div className="absolute top-0 right-0">
-                <Badge className="bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 font-bold text-xs rounded-bl-lg rounded-tr-lg px-2 py-1">
-                  NEW
-                </Badge>
-              </div>
-              <CardContent className="pt-6">
-                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 flex items-center justify-center mx-auto mb-4 shadow-lg relative">
-                  <Bot className="h-8 w-8 text-white" />
-                  <Sparkles className="h-4 w-4 text-yellow-300 absolute -top-1 -right-1 animate-pulse" />
-                </div>
-                <h3 className="font-semibold mb-2 text-center text-blue-800 dark:text-blue-200">AI Assistant</h3>
-                <p className="text-sm text-center text-blue-700 dark:text-blue-300">
-                  Get instant AI-powered support available 24/7
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <Card className="border-2 border-blue-300 dark:border-blue-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all shadow-xl bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 dark:from-blue-950/30 dark:via-cyan-950/30 dark:to-teal-950/30 hover:-translate-y-1">
-              <CardHeader className="text-center">
-                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 flex items-center justify-center shadow-lg">
-                  <UserCircle className="h-8 w-8 text-white" />
-                </div>
-                <CardTitle className="text-2xl bg-gradient-to-r from-blue-700 to-cyan-700 dark:from-blue-300 dark:to-cyan-300 bg-clip-text text-transparent">
-                  Customer Login
-                </CardTitle>
-                <CardDescription className="text-blue-700 dark:text-blue-300">
-                  Get help from expert technicians for your technical issues
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2 text-sm text-blue-700 dark:text-blue-300 mb-6">
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-600 dark:text-blue-400 mt-0.5">✓</span>
-                    <span>View available experts</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-600 dark:text-blue-400 mt-0.5">✓</span>
-                    <span>Start real-time chat sessions</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-600 dark:text-blue-400 mt-0.5">✓</span>
-                    <span>Share screenshots and images</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-600 dark:text-blue-400 mt-0.5">✓</span>
-                    <span>Access AI assistant 24/7</span>
-                  </li>
-                </ul>
-                <Button 
-                  className="w-full bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 hover:from-blue-700 hover:via-cyan-700 hover:to-teal-700 shadow-lg" 
-                  size="lg"
-                  onClick={() => navigate({ to: '/customer-login' })}
+      {/* Features Grid */}
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <h2
+          className="text-3xl font-display font-bold text-center mb-12"
+          style={{ color: 'var(--foreground)' }}
+        >
+          Everything You Need
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <div
+                key={feature.title}
+                className="interactive-card rounded-2xl p-6 border-2"
+                style={{
+                  background: 'var(--card)',
+                  borderColor: 'var(--border)',
+                }}
+              >
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: feature.bg, color: feature.color }}
                 >
-                  <Shield className="h-5 w-5 mr-2" />
-                  Login as Customer
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 border-violet-300 dark:border-violet-700 hover:border-violet-500 dark:hover:border-violet-500 transition-all shadow-xl bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-950/30 dark:via-purple-950/30 dark:to-fuchsia-950/30 hover:-translate-y-1">
-              <CardHeader className="text-center">
-                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 flex items-center justify-center shadow-lg">
-                  <Wrench className="h-8 w-8 text-white" />
+                  <Icon className="w-6 h-6" />
                 </div>
-                <CardTitle className="text-2xl bg-gradient-to-r from-violet-700 to-purple-700 dark:from-violet-300 dark:to-purple-300 bg-clip-text text-transparent">
-                  Expert Login
-                </CardTitle>
-                <CardDescription className="text-violet-700 dark:text-violet-300">
-                  Help customers solve their technical problems
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2 text-sm text-violet-700 dark:text-violet-300 mb-6">
-                  <li className="flex items-start gap-2">
-                    <span className="text-violet-600 dark:text-violet-400 mt-0.5">✓</span>
-                    <span>Manage incoming chat requests</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-violet-600 dark:text-violet-400 mt-0.5">✓</span>
-                    <span>Respond to customers in real-time</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-violet-600 dark:text-violet-400 mt-0.5">✓</span>
-                    <span>Share helpful screenshots</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-violet-600 dark:text-violet-400 mt-0.5">✓</span>
-                    <span>Track support history</span>
-                  </li>
-                </ul>
-                <Button 
-                  className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-700 hover:via-purple-700 hover:to-fuchsia-700 shadow-lg" 
-                  size="lg"
-                  onClick={() => navigate({ to: '/expert-login' })}
-                >
-                  <Zap className="h-5 w-5 mr-2" />
-                  Login as Expert
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+                <h3 className="font-display font-bold text-lg mb-2" style={{ color: 'var(--foreground)' }}>
+                  {feature.title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
+                  {feature.description}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bottom CTA */}
+      <div className="max-w-6xl mx-auto px-4 pb-16 text-center">
+        <div
+          className="rounded-3xl p-10 border-2"
+          style={{
+            background: 'linear-gradient(135deg, oklch(0.52 0.18 195 / 0.08) 0%, oklch(0.55 0.16 265 / 0.08) 100%)',
+            borderColor: 'oklch(0.52 0.18 195 / 0.2)',
+          }}
+        >
+          <h2 className="text-3xl font-display font-bold mb-4" style={{ color: 'var(--foreground)' }}>
+            Ready to Get Started?
+          </h2>
+          <p className="text-lg mb-8" style={{ color: 'var(--muted-foreground)' }}>
+            Join thousands of customers who trust PKG Tech Support for their IT needs.
+          </p>
+          <button
+            onClick={() => navigate({ to: '/customer-login' })}
+            className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl text-lg font-bold transition-all duration-200 hover:scale-105 active:scale-95"
+            style={{
+              background: 'var(--primary)',
+              color: 'var(--primary-foreground)',
+              boxShadow: '0 8px 32px oklch(0.52 0.18 195 / 0.35)',
+            }}
+          >
+            <MessageCircle className="w-5 h-5" />
+            Start a Chat
+            <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </div>

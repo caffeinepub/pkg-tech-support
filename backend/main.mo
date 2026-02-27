@@ -12,10 +12,7 @@ import AccessControl "authorization/access-control";
 import Stripe "stripe/stripe";
 import OutCall "http-outcalls/outcall";
 import MixinStorage "blob-storage/Mixin";
-import Migration "migration";
 
-// Specify the data migration function in with-clause in main actor
-(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -113,6 +110,9 @@ actor {
   let chatFeedback = Map.empty<Nat, ChatFeedback>();
   let checkoutSessions = Map.empty<Text, Principal>();
   let completedPayments = Map.empty<Principal, Bool>();
+
+  // Maps a messageId to the ticketId it belongs to
+  let messageTicketIndex = Map.empty<Nat, Nat>();
 
   let lastMessageTime = Map.empty<Principal, Int>();
   let lastTicketTime = Map.empty<Principal, Int>();
@@ -252,12 +252,12 @@ actor {
   func hasActiveSupportRelationship(user1 : Principal, user2 : Principal) : Bool {
     let allTickets = supportTickets.values().toArray();
     for (ticket in allTickets.vals()) {
-      if ((ticket.customer == user1 and ticket.technician == user2) or 
+      if ((ticket.customer == user1 and ticket.technician == user2) or
           (ticket.customer == user2 and ticket.technician == user1)) {
         switch (ticket.status) {
           case (#open) { return true };
           case (#inProgress) { return true };
-          case (#resolved) { 
+          case (#resolved) {
             let dayInNanos = 24 * 60 * 60 * 1_000_000_000;
             if (Time.now() - ticket.updatedAt < dayInNanos) {
               return true;
@@ -282,6 +282,9 @@ actor {
     lastActionMap.add(caller, Time.now());
   };
 
+  // sendMessage: allows any authenticated user (#user role) to send a message
+  // within an active support session (ticket). Both customers and technicians
+  // can send messages as long as they are participants in an active ticket.
   public shared ({ caller }) func sendMessage(
     recipient : Principal,
     content : Text,
@@ -333,6 +336,74 @@ actor {
     #success;
   };
 
+  // sendMessageForTicket: allows customers or technicians to send a message
+  // scoped to a specific support ticket. Both participants of the ticket
+  // (customer and technician) are authorized to send messages.
+  public shared ({ caller }) func sendMessageForTicket(
+    ticketId : Nat,
+    content : Text,
+    attachment : ?Storage.ExternalBlob
+  ) : async MessageStatus {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return #failed("Unauthorized: Only users can send messages");
+    };
+
+    // Rate limiting: 1 message per second
+    if (not checkRateLimit(caller, lastMessageTime, 1_000_000_000)) {
+      return #failed("Rate limit exceeded: Please wait before sending another message");
+    };
+
+    if (content.size() == 0 and attachment == null) {
+      return #failed("Message must contain either text or an attachment");
+    };
+
+    if (content.size() > 5000) {
+      return #failed("Message content exceeds maximum length of 5000 characters");
+    };
+
+    switch (supportTickets.get(ticketId)) {
+      case (null) {
+        return #failed("Ticket does not exist");
+      };
+      case (?ticket) {
+        // Only the customer or technician of this ticket can send messages
+        if (ticket.customer != caller and ticket.technician != caller) {
+          return #failed("Unauthorized: You are not a participant of this ticket");
+        };
+
+        // Ticket must be active (open or inProgress)
+        switch (ticket.status) {
+          case (#resolved) {
+            return #failed("Cannot send messages on a resolved ticket");
+          };
+          case (_) { /* open or inProgress — allowed */ };
+        };
+
+        let recipient = if (ticket.customer == caller) { ticket.technician } else { ticket.customer };
+
+        let messageId : Nat = _getNextMessageId();
+
+        let message : ChatMessage = {
+          messageId;
+          sender = caller;
+          recipient;
+          content;
+          timestamp = Time.now();
+          delivered = false;
+          isRead = false;
+          attachment;
+        };
+
+        messages.add(messageId, message);
+        // Index this message to the ticket
+        messageTicketIndex.add(messageId, ticketId);
+        updateRateLimit(caller, lastMessageTime);
+
+        #success;
+      };
+    };
+  };
+
   func _getNextMessageId() : Nat {
     let count = switch (messageIdCounter.get(0)) {
       case (null) { 0 };
@@ -342,6 +413,46 @@ actor {
     count;
   };
 
+  // getChatMessages: fetches all messages for a specific support ticket.
+  // Only the customer or technician of that ticket (or an admin) can access
+  // the messages. This ensures customers can read their own chat history
+  // while being prevented from accessing other customers' sessions.
+  public query ({ caller }) func getChatMessages(ticketId : Nat) : async [ChatMessage] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access chat messages");
+    };
+
+    switch (supportTickets.get(ticketId)) {
+      case (null) {
+        Runtime.trap("Ticket does not exist");
+      };
+      case (?ticket) {
+        // Only the customer, technician, or an admin can read messages for this ticket
+        if (ticket.customer != caller and ticket.technician != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: You are not a participant of this ticket");
+        };
+
+        // Return messages that are either indexed to this ticket OR
+        // exchanged between the customer and technician of this ticket
+        // (to support legacy messages sent via sendMessage without ticket scoping)
+        let customer = ticket.customer;
+        let technician = ticket.technician;
+
+        messages.values().toArray().filter(func(msg : ChatMessage) : Bool {
+          // Check if message is indexed to this ticket
+          switch (messageTicketIndex.get(msg.messageId)) {
+            case (?tid) { tid == ticketId };
+            case (null) {
+              // Fall back: message is between the ticket's customer and technician
+              (msg.sender == customer and msg.recipient == technician) or
+              (msg.sender == technician and msg.recipient == customer)
+            };
+          };
+        });
+      };
+    };
+  };
+
   public query ({ caller }) func getMessagesBetweenUsers(user1 : Principal, user2 : Principal) : async [ChatMessage] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access messages");
@@ -349,8 +460,8 @@ actor {
     if (caller != user1 and caller != user2) {
       Runtime.trap("Unauthorized: Can only view messages you are part of");
     };
-    messages.values().toArray().filter(func(msg : ChatMessage) : Bool { 
-      (msg.sender == user1 and msg.recipient == user2) or (msg.sender == user2 and msg.recipient == user1) 
+    messages.values().toArray().filter(func(msg : ChatMessage) : Bool {
+      (msg.sender == user1 and msg.recipient == user2) or (msg.sender == user2 and msg.recipient == user1)
     });
   };
 
@@ -358,8 +469,8 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access messages");
     };
-    messages.values().toArray().filter(func(msg : ChatMessage) : Bool { 
-      msg.sender == caller or msg.recipient == caller 
+    messages.values().toArray().filter(func(msg : ChatMessage) : Bool {
+      msg.sender == caller or msg.recipient == caller
     });
   };
 
@@ -391,6 +502,7 @@ actor {
         };
 
         messages.remove(messageId);
+        messageTicketIndex.remove(messageId);
       };
     };
   };
@@ -424,6 +536,53 @@ actor {
     };
   };
 
+  // markTicketMessagesAsRead: marks all messages in a ticket as read for the caller.
+  // Only the customer or technician of the ticket can call this.
+  public shared ({ caller }) func markTicketMessagesAsRead(ticketId : Nat) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can mark messages as read");
+    };
+
+    switch (supportTickets.get(ticketId)) {
+      case (null) {
+        Runtime.trap("Ticket does not exist");
+      };
+      case (?ticket) {
+        if (ticket.customer != caller and ticket.technician != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: You are not a participant of this ticket");
+        };
+
+        let customer = ticket.customer;
+        let technician = ticket.technician;
+
+        let allMessages = messages.entries();
+        for ((id, msg) in allMessages) {
+          let belongsToTicket = switch (messageTicketIndex.get(msg.messageId)) {
+            case (?tid) { tid == ticketId };
+            case (null) {
+              (msg.sender == customer and msg.recipient == technician) or
+              (msg.sender == technician and msg.recipient == customer)
+            };
+          };
+
+          if (belongsToTicket and msg.recipient == caller and not msg.isRead) {
+            let updatedMessage : ChatMessage = {
+              messageId = msg.messageId;
+              sender = msg.sender;
+              recipient = msg.recipient;
+              content = msg.content;
+              timestamp = msg.timestamp;
+              delivered = msg.delivered;
+              isRead = true;
+              attachment = msg.attachment;
+            };
+            messages.add(id, updatedMessage);
+          };
+        };
+      };
+    };
+  };
+
   public shared ({ caller }) func submitRating(rating : Int, comment : Text) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can submit ratings");
@@ -446,7 +605,7 @@ actor {
       case (null) { /* Allow if no profile exists */ };
     };
 
-    let userTickets = supportTickets.values().toArray().filter(func(ticket : SupportTicket) : Bool { 
+    let userTickets = supportTickets.values().toArray().filter(func(ticket : SupportTicket) : Bool {
       ticket.customer == caller and (ticket.status == #resolved)
     });
 
@@ -515,7 +674,7 @@ actor {
     };
 
     switch (checkoutSessions.get(sessionId)) {
-      case (null) { 
+      case (null) {
         Runtime.trap("Unauthorized: Invalid session");
       };
       case (?owner) {
@@ -831,8 +990,8 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access support tickets");
     };
-    supportTickets.values().toArray().filter(func(ticket : SupportTicket) : Bool { 
-      ticket.customer == caller or ticket.technician == caller 
+    supportTickets.values().toArray().filter(func(ticket : SupportTicket) : Bool {
+      ticket.customer == caller or ticket.technician == caller
     });
   };
 
@@ -873,8 +1032,8 @@ actor {
     };
 
     switch (userProfiles.get(caller)) {
-      case (null) { 
-        Runtime.trap("User profile not found. Please create a profile first") 
+      case (null) {
+        Runtime.trap("User profile not found. Please create a profile first")
       };
       case (?profile) {
         if (not profile.isTechnician) {
@@ -919,7 +1078,6 @@ actor {
 
   // Knowledge Base functions
   // createKBArticle: admin-only — KB articles are managed content, not user-generated.
-  // Admins and technicians (who have admin role) manage the knowledge base.
   public shared ({ caller }) func createKBArticle(
     title : Text,
     category : KnowledgeCategory,
@@ -945,7 +1103,7 @@ actor {
     kbArticles.add(articleId, article);
   };
 
-  // updateKBArticle: admin-only — only admins can modify KB articles
+  // updateKBArticle: admin-only
   public shared ({ caller }) func updateKBArticle(
     articleId : Nat,
     title : Text,
@@ -1032,7 +1190,7 @@ actor {
 
     let searchResultsIter = articlesList.values().filter(
       func(article) {
-        article.body.toLower().contains(#text lowerTerm) or 
+        article.body.toLower().contains(#text lowerTerm) or
         article.title.toLower().contains(#text lowerTerm)
       }
     );
@@ -1060,7 +1218,7 @@ actor {
     kbArticles.get(articleId);
   };
 
-  // Analytics: admin/technician only — visible only to admin/technician users per implementation plan
+  // Analytics: admin/technician only
   public query ({ caller }) func getAnalyticsMetrics() : async {
     totalTickets : Nat;
     openTickets : Nat;
@@ -1095,7 +1253,7 @@ actor {
     };
   };
 
-  // Fragments from old code
+  // Type definitions
   public type UserProfile = {
     displayName : Text;
     isTechnician : Bool;
@@ -1178,5 +1336,11 @@ actor {
     rating : Int;
     comment : Text;
     submittedAt : Int;
+  };
+
+  public type ChatSession = {
+    customer : Principal;
+    publicMessages : [ChatMessage];
+    privateMessages : [ChatMessage];
   };
 };

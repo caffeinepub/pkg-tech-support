@@ -1,16 +1,15 @@
 import React from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Button } from '@/components/ui/button';
-import { Moon, Sun, BookOpen, Home } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
+import { BookOpen, LogIn, LogOut, Monitor, Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 export default function Header() {
-  const { theme, setTheme } = useTheme();
-  const { identity, clear, login, loginStatus } = useInternetIdentity();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { login, clear, loginStatus, identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
+  const { theme, setTheme } = useTheme();
 
   const isAuthenticated = !!identity;
   const isLoggingIn = loginStatus === 'logging-in';
@@ -24,7 +23,7 @@ export default function Header() {
       try {
         await login();
       } catch (error: any) {
-        if (error.message === 'User is already authenticated') {
+        if (error?.message === 'User is already authenticated') {
           await clear();
           setTimeout(() => login(), 300);
         }
@@ -32,62 +31,92 @@ export default function Header() {
     }
   };
 
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-r from-primary via-primary/90 to-secondary shadow-lg">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <div
-          className="flex items-center gap-3 cursor-pointer"
+    <header
+      className="sticky top-0 z-40 border-b backdrop-blur-md"
+      style={{
+        background: 'oklch(from var(--card) l c h / 0.92)',
+        borderColor: 'var(--border)',
+      }}
+    >
+      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        {/* Logo */}
+        <button
           onClick={() => navigate({ to: '/' })}
+          className="flex items-center gap-3 group"
         >
-          <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">PKG</span>
-          </div>
-          <div>
-            <h1 className="text-white font-bold text-lg leading-tight">PKG Tech Support</h1>
-            <p className="text-white/70 text-xs hidden sm:block">Professional IT Helpdesk</p>
-          </div>
-        </div>
-
-        <nav className="hidden md:flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white/80 hover:text-white hover:bg-white/10"
-            onClick={() => navigate({ to: '/' })}
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+            style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
           >
-            <Home className="w-4 h-4 mr-1" /> Home
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white/80 hover:text-white hover:bg-white/10"
+            <Monitor className="w-5 h-5" />
+          </div>
+          <div className="hidden sm:block">
+            <span className="font-display font-bold text-lg" style={{ color: 'var(--foreground)' }}>
+              PKG Tech
+            </span>
+            <span className="text-sm ml-1.5 font-medium" style={{ color: 'var(--primary)' }}>
+              Support
+            </span>
+          </div>
+        </button>
+
+        {/* Nav */}
+        <nav className="flex items-center gap-2">
+          {/* Knowledge Base */}
+          <button
             onClick={() => navigate({ to: '/knowledge-base' })}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105"
+            style={{
+              color: 'var(--muted-foreground)',
+              background: 'transparent',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = 'var(--tab-hover-bg)';
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--tab-hover-fg)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--muted-foreground)';
+            }}
           >
-            <BookOpen className="w-4 h-4 mr-1" /> Knowledge Base
-          </Button>
-        </nav>
+            <BookOpen className="w-4 h-4" />
+            <span className="hidden sm:inline">Knowledge Base</span>
+          </button>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white/80 hover:text-white hover:bg-white/10"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-110"
+            style={{ color: 'var(--muted-foreground)', background: 'var(--muted)' }}
+            aria-label="Toggle theme"
           >
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </Button>
-          <Button
+          </button>
+
+          {/* Login/Logout */}
+          <button
             onClick={handleAuth}
             disabled={isLoggingIn}
-            size="sm"
-            className={isAuthenticated
-              ? 'bg-white/20 hover:bg-white/30 text-white border border-white/30'
-              : 'bg-white text-primary hover:bg-white/90'
-            }
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50"
+            style={{
+              background: isAuthenticated ? 'var(--muted)' : 'var(--primary)',
+              color: isAuthenticated ? 'var(--foreground)' : 'var(--primary-foreground)',
+            }}
           >
-            {isLoggingIn ? 'Logging in...' : isAuthenticated ? 'Logout' : 'Login'}
-          </Button>
-        </div>
+            {isAuthenticated ? (
+              <><LogOut className="w-4 h-4" /><span className="hidden sm:inline">Logout</span></>
+            ) : isLoggingIn ? (
+              <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /><span className="hidden sm:inline">Logging in...</span></>
+            ) : (
+              <><LogIn className="w-4 h-4" /><span className="hidden sm:inline">Login</span></>
+            )}
+          </button>
+        </nav>
       </div>
     </header>
   );

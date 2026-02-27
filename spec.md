@@ -1,13 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Extend PKG Tech Support with a full ticketing system, enhanced AI chat bot, knowledge base, client portal, and analytics dashboard.
+**Goal:** Fix customer chat history visibility, enable customer reply messages, and remove the payment gate from ticket creation in PKG Tech Support.
 
 **Planned changes:**
-- Add a ticketing system with ticket creation form, priority levels (Low, Medium, High, Critical), SLA tracking with visual breach indicators, status workflow (Open, In Progress, Pending, Resolved, Closed), and technician-side status/priority editing. Store ticket data in the backend actor.
-- Enhance the existing AIAssistantChat component with an expanded IT FAQ keyword-matching knowledge base (printers, Windows, passwords, networking) and a "Hand off to human agent" escalation action that creates a ticket and routes to live chat, preserving chat history.
-- Build a Knowledge Base section in the main navigation with a searchable, category-filtered article library (Printers & Peripherals, Windows Troubleshooting, Network & Connectivity, Account & Passwords, Hardware). Articles stored in the backend with title, category, body, tags, and view count. Includes article cards, full detail view, view count increment, and admin/technician article creation and editing.
-- Build a Client Portal tab in the CustomerDashboard showing the customer's tickets with status/priority/SLA badges, a resolved ticket service history timeline, the ability to comment on or reopen tickets, and a Razorpay payment section for support plans or incident payments. Accessible only to authenticated customers.
-- Build an Analytics Dashboard tab in the ExpertDashboard (admin/technician only) showing: average first reply time, ticket resolution rate, open ticket count by priority (chart), agent performance table (tickets handled, avg resolution time), and a daily ticket volume chart for the last 30 days. All metrics derived from backend ticket and message data.
+- Fix the ChatSection component so customers can see the full message history for their active chat sessions, fetched from the backend in chronological order with correct sender attribution.
+- Fix the ChatSection component so customers can type and send reply messages; ensure the message input field and send button are rendered and functional for authenticated customers.
+- Remove all payment gate checks (Stripe/Razorpay/subscription validation) from the ticket creation flow in ClientPortal and TicketCreationForm so any authenticated customer can create a ticket unconditionally.
+- Audit and fix backend `main.mo` authorization checks on `getChatMessages` and `sendMessage` to allow customers to read and write their own chat session messages while denying access to other customers' sessions.
 
-**User-visible outcome:** Technicians gain a full ticketing workflow with SLA tracking and an analytics dashboard; customers get a self-service knowledge base, AI-assisted chat with human escalation, a client portal to manage their tickets and make payments via Razorpay; and all users benefit from organized, searchable IT support articles.
+**User-visible outcome:** Customers can view their full chat history, send reply messages in active support sessions, and create new support tickets without any payment or plan prompts blocking them.

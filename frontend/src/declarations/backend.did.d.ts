@@ -181,6 +181,7 @@ export interface _SERVICE {
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getChatFeedback' : ActorMethod<[bigint], [] | [ChatFeedback]>,
+  'getChatMessages' : ActorMethod<[bigint], Array<ChatMessage>>,
   'getKBArticle' : ActorMethod<[bigint], [] | [KBArticle]>,
   'getLoginEvents' : ActorMethod<[], Array<LoginEvent>>,
   'getLoginEventsCSV' : ActorMethod<[], string>,
@@ -203,10 +204,15 @@ export interface _SERVICE {
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isStripeConfigured' : ActorMethod<[], boolean>,
   'markMessagesAsRead' : ActorMethod<[Principal, Principal], undefined>,
+  'markTicketMessagesAsRead' : ActorMethod<[bigint], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'searchKBArticles' : ActorMethod<[string], Array<KBArticle>>,
   'sendMessage' : ActorMethod<
     [Principal, string, [] | [ExternalBlob]],
+    MessageStatus
+  >,
+  'sendMessageForTicket' : ActorMethod<
+    [bigint, string, [] | [ExternalBlob]],
     MessageStatus
   >,
   'setAllTechniciansOffline' : ActorMethod<[], undefined>,

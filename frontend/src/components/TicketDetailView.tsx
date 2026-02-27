@@ -3,10 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, ArrowLeft, User, Clock, CheckCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, ArrowLeft, User, Clock, CheckCircle, Lock } from 'lucide-react';
 import { SupportTicket, TicketStatusOld } from '../backend';
 import { useUpdateTicketStatus } from '../hooks/useTickets';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useGetCallerUserProfile } from '../hooks/useQueries';
 
 interface TicketDetailViewProps {
   ticket: SupportTicket;
@@ -32,21 +33,26 @@ function formatDateTime(timestamp: bigint): string {
 }
 
 const statusColors: Record<string, string> = {
-  open: 'bg-blue-100 text-blue-800',
-  inProgress: 'bg-yellow-100 text-yellow-800',
-  resolved: 'bg-green-100 text-green-800',
+  open: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  inProgress: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+  resolved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
 };
 
-export default function TicketDetailView({ ticket, onBack, isTechnician }: TicketDetailViewProps) {
-  const { identity } = useInternetIdentity();
+const statusLabels: Record<string, string> = {
+  open: 'Open',
+  inProgress: 'In Progress',
+  resolved: 'Resolved',
+};
+
+export default function TicketDetailView({ ticket, onBack, isTechnician: isTechnicianProp }: TicketDetailViewProps) {
+  const { data: userProfile } = useGetCallerUserProfile();
   const updateStatus = useUpdateTicketStatus();
   const [newStatus, setNewStatus] = useState<string>(getStatusKey(ticket.status));
 
+  // Determine if the current user is a technician — prefer prop, fall back to profile
+  const isTechnician = isTechnicianProp ?? !!userProfile?.isTechnician;
+
   const statusKey = getStatusKey(ticket.status);
-  const isParticipant =
-    identity &&
-    (ticket.customer.toString() === identity.getPrincipal().toString() ||
-      ticket.technician.toString() === identity.getPrincipal().toString());
 
   const handleStatusUpdate = () => {
     const statusMap: Record<string, TicketStatusOld> = {
@@ -67,11 +73,12 @@ export default function TicketDetailView({ ticket, onBack, isTechnician }: Ticke
         )}
         <h2 className="text-lg font-semibold">Ticket #{ticket.ticketId.toString()}</h2>
         <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[statusKey]}`}>
-          {statusKey === 'open' ? 'Open' : statusKey === 'inProgress' ? 'In Progress' : 'Resolved'}
+          {statusLabels[statusKey] ?? 'Unknown'}
         </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Ticket Info */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Ticket Info</CardTitle>
@@ -104,43 +111,65 @@ export default function TicketDetailView({ ticket, onBack, isTechnician }: Ticke
           </CardContent>
         </Card>
 
-        {(isTechnician || isParticipant) && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Update Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Select value={newStatus} onValueChange={setNewStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="inProgress">In Progress</SelectItem>
-                  <SelectItem value="resolved">Resolved</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={handleStatusUpdate}
-                disabled={updateStatus.isPending || newStatus === statusKey}
-                className="w-full"
-                size="sm"
-              >
-                {updateStatus.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Updating...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4 mr-2" /> Update Status
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        {/* Status Card — editable for technicians, read-only for customers */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              {isTechnician ? 'Update Status' : (
+                <>
+                  <Lock className="w-3.5 h-3.5" />
+                  Ticket Status
+                </>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {isTechnician ? (
+              /* Expert/Technician: full status edit control */
+              <>
+                <Select value={newStatus} onValueChange={setNewStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="inProgress">In Progress</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={handleStatusUpdate}
+                  disabled={updateStatus.isPending || newStatus === statusKey}
+                  className="w-full"
+                  size="sm"
+                >
+                  {updateStatus.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Updating...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" /> Update Status
+                    </>
+                  )}
+                </Button>
+              </>
+            ) : (
+              /* Customer: read-only status badge */
+              <div className="flex flex-col gap-2">
+                <Badge
+                  className={`w-fit text-sm px-3 py-1 font-semibold ${statusColors[statusKey]}`}
+                  variant="outline"
+                >
+                  {statusLabels[statusKey] ?? 'Unknown'}
+                </Badge>
+                <p className="text-xs text-muted-foreground">
+                  Status is managed by your assigned technician.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {ticket.messages && ticket.messages.length > 0 && (

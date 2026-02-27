@@ -1,134 +1,227 @@
 import React, { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Clock, Ticket, ChevronRight } from 'lucide-react';
+import { useGetUserTickets, useGetAdminTickets, useGetTicket } from '../hooks/useTickets';
 import { SupportTicket, TicketStatusOld } from '../backend';
+import { Ticket, Clock, CheckCircle, AlertCircle, Loader2, Filter } from 'lucide-react';
+import TicketDetailView from './TicketDetailView';
+import { useGetCallerUserProfile } from '../hooks/useQueries';
 
-interface TicketListViewProps {
-  tickets: SupportTicket[];
-  isLoading?: boolean;
-  onSelectTicket?: (ticket: SupportTicket) => void;
-  showAll?: boolean;
-}
-
-const statusColors: Record<string, string> = {
-  open: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  inProgress: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-  resolved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+  [TicketStatusOld.open]: {
+    label: 'Open',
+    color: 'var(--warning)',
+    bg: 'oklch(0.70 0.20 45 / 0.12)',
+    icon: AlertCircle,
+  },
+  [TicketStatusOld.inProgress]: {
+    label: 'In Progress',
+    color: 'var(--primary)',
+    bg: 'oklch(0.52 0.18 195 / 0.12)',
+    icon: Clock,
+  },
+  [TicketStatusOld.resolved]: {
+    label: 'Resolved',
+    color: 'var(--success)',
+    bg: 'oklch(0.58 0.18 145 / 0.12)',
+    icon: CheckCircle,
+  },
 };
 
-const statusLabels: Record<string, string> = {
-  open: 'Open',
-  inProgress: 'In Progress',
-  resolved: 'Resolved',
-};
-
-function getStatusKey(status: TicketStatusOld): string {
-  if (status === TicketStatusOld.open) return 'open';
-  if (status === TicketStatusOld.inProgress) return 'inProgress';
-  if (status === TicketStatusOld.resolved) return 'resolved';
-  return 'open';
-}
-
-function formatDate(timestamp: bigint): string {
-  return new Date(Number(timestamp) / 1_000_000).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-export default function TicketListView({ tickets, isLoading, onSelectTicket }: TicketListViewProps) {
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-
-  const filtered = tickets.filter((t) => {
-    if (statusFilter === 'all') return true;
-    return getStatusKey(t.status) === statusFilter;
-  });
+// Sub-component that fetches a single ticket and renders TicketDetailView
+function TicketDetailLoader({
+  ticketId,
+  onBack,
+  isTechnician,
+}: {
+  ticketId: bigint;
+  onBack: () => void;
+  isTechnician: boolean;
+}) {
+  const { data: ticket, isLoading } = useGetTicket(ticketId);
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-20 w-full rounded-lg" />
-        ))}
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
       </div>
     );
   }
 
+  if (!ticket) {
+    return (
+      <div className="text-center py-12" style={{ color: 'var(--muted-foreground)' }}>
+        <p>Ticket not found.</p>
+        <button
+          onClick={onBack}
+          className="mt-4 underline text-sm"
+          style={{ color: 'var(--primary)' }}
+        >
+          Back to Tickets
+        </button>
+      </div>
+    );
+  }
+
+  return <TicketDetailView ticket={ticket} onBack={onBack} isTechnician={isTechnician} />;
+}
+
+interface TicketListViewProps {
+  /** If true, loads admin tickets (all tickets); otherwise loads user tickets */
+  showAll?: boolean;
+}
+
+export default function TicketListView({ showAll = false }: TicketListViewProps) {
+  const { data: userProfile } = useGetCallerUserProfile();
+  const isTechnician = !!userProfile?.isTechnician;
+
+  const {
+    data: userTickets,
+    isLoading: userLoading,
+    error: userError,
+  } = useGetUserTickets();
+
+  const {
+    data: adminTickets,
+    isLoading: adminLoading,
+    error: adminError,
+  } = useGetAdminTickets();
+
+  const tickets: SupportTicket[] = showAll
+    ? (adminTickets || [])
+    : (userTickets || []);
+  const isLoading = showAll ? adminLoading : userLoading;
+  const error = showAll ? adminError : userError;
+
+  const [selectedTicketId, setSelectedTicketId] = useState<bigint | null>(null);
+  const [statusFilter, setStatusFilter] = useState<TicketStatusOld | 'all'>('all');
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div
+        className="rounded-2xl border-2 p-6 text-center"
+        style={{
+          borderColor: 'var(--destructive)',
+          background: 'oklch(0.55 0.22 25 / 0.08)',
+        }}
+      >
+        <AlertCircle className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--destructive)' }} />
+        <p style={{ color: 'var(--destructive)' }}>Failed to load tickets</p>
+      </div>
+    );
+  }
+
+  if (selectedTicketId !== null) {
+    return (
+      <TicketDetailLoader
+        ticketId={selectedTicketId}
+        onBack={() => setSelectedTicketId(null)}
+        isTechnician={isTechnician}
+      />
+    );
+  }
+
+  const filtered = tickets.filter((t) =>
+    statusFilter === 'all' ? true : t.status === statusFilter
+  );
+
+  const filterOptions: Array<{ value: TicketStatusOld | 'all'; label: string }> = [
+    { value: 'all', label: 'All Tickets' },
+    { value: TicketStatusOld.open, label: 'Open' },
+    { value: TicketStatusOld.inProgress, label: 'In Progress' },
+    { value: TicketStatusOld.resolved, label: 'Resolved' },
+  ];
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="inProgress">In Progress</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
-          </SelectContent>
-        </Select>
-        <span className="text-sm text-muted-foreground">{filtered.length} ticket(s)</span>
+      {/* Filter bar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Filter className="w-4 h-4" style={{ color: 'var(--muted-foreground)' }} />
+        {filterOptions.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => setStatusFilter(opt.value)}
+            className="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105"
+            style={
+              statusFilter === opt.value
+                ? { background: 'var(--primary)', color: 'var(--primary-foreground)' }
+                : { background: 'var(--muted)', color: 'var(--muted-foreground)' }
+            }
+          >
+            {opt.label}
+          </button>
+        ))}
+        <span className="text-sm ml-1" style={{ color: 'var(--muted-foreground)' }}>
+          {filtered.length} ticket{filtered.length !== 1 ? 's' : ''}
+        </span>
       </div>
 
+      {/* Ticket list */}
       {filtered.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Ticket className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No tickets found</p>
-          <p className="text-sm">Create a new ticket to get started</p>
+        <div
+          className="rounded-2xl border-2 p-12 text-center"
+          style={{ borderColor: 'var(--border)', background: 'var(--card)' }}
+        >
+          <Ticket className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--muted-foreground)' }} />
+          <p className="font-semibold text-lg mb-1" style={{ color: 'var(--foreground)' }}>
+            No tickets found
+          </p>
+          <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+            {statusFilter === 'all'
+              ? 'No support tickets yet.'
+              : `No ${statusFilter} tickets.`}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((ticket) => {
-            const statusKey = getStatusKey(ticket.status);
-            const borderColor =
-              statusKey === 'open'
-                ? '#3b82f6'
-                : statusKey === 'inProgress'
-                ? '#f59e0b'
-                : '#10b981';
+            const statusKey = ticket.status as string;
+            const cfg = STATUS_CONFIG[statusKey] || STATUS_CONFIG[TicketStatusOld.open];
+            const StatusIcon = cfg.icon;
             return (
-              <Card
+              <button
                 key={ticket.ticketId.toString()}
-                className="cursor-pointer hover:shadow-md transition-shadow border-l-4"
-                style={{ borderLeftColor: borderColor }}
-                onClick={() => onSelectTicket?.(ticket)}
+                onClick={() => setSelectedTicketId(ticket.ticketId)}
+                className="w-full text-left rounded-2xl border-2 p-4 transition-all duration-200 hover:scale-[1.01] hover:shadow-card-hover interactive-card"
+                style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = cfg.color;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)';
+                }}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: cfg.bg, color: cfg.color }}
+                    >
+                      <StatusIcon className="w-5 h-5" />
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs text-muted-foreground font-mono">
-                          #{ticket.ticketId.toString()}
-                        </span>
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            statusColors[statusKey]
-                          }`}
-                        >
-                          {statusLabels[statusKey]}
-                        </span>
-                      </div>
-                      <p className="font-medium text-sm truncate">Support Session</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Created {formatDate(ticket.createdAt)}
+                      <p className="font-semibold truncate" style={{ color: 'var(--foreground)' }}>
+                        Ticket #{ticket.ticketId.toString()}
+                      </p>
+                      <p className="text-sm mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
+                        {new Date(Number(ticket.createdAt) / 1_000_000).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="w-3 h-3" />
-                        {formatDate(ticket.updatedAt)}
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                  <span
+                    className="px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0"
+                    style={{ background: cfg.bg, color: cfg.color }}
+                  >
+                    {cfg.label}
+                  </span>
+                </div>
+              </button>
             );
           })}
         </div>
