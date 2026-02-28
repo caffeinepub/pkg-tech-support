@@ -1,18 +1,20 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 15,
+  "projectStateVersion": 19,
   "summary": "IT support/helpdesk website with ticketing system, live chat, knowledge base, client portal, and analytics features.",
   "architectural_notes": [
     "Razorpay integration required for client portal payments",
     "AI bot needed for live chat FAQ handling with human handover support",
     "Separate login pages for expert and customer roles; home page should not contain expert login link",
     "Ticket status modification is restricted to experts/admins only; customers have read-only access to ticket status",
-    "Ticket creation must not require payment; payment gate must be removed from ticket creation flow"
+    "Ticket creation must not require payment; payment gate must be removed from ticket creation flow",
+    "PayU API integration required for payment gateway (replacing or alongside Razorpay)"
   ],
   "known_issues": [
     "Chat history not visible on customer side; customers cannot reply in live chat"
   ],
-  "isFixRequest": true,
+  "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Wide banner with bold text 'Device Fixes Done Right' on a clean white/light-grey background with subtle tech iconography silhouettes (device-fixes-banner.dim_1200x400.png)\n- Flat vector illustration of a laptop computer, front-facing, minimal line-art style on transparent background (laptop-icon.dim_64x64.png)\n- Flat vector illustration of a smartphone, front-facing, minimal line-art style on transparent background (phone-icon.dim_64x64.png)\n- Flat vector illustration of a desktop inkjet printer, front-facing, minimal line-art style on transparent background (printer-icon.dim_64x64.png)\n- Side-by-side before/after illustration of a printer setup: left panel showing tangled cables and offline status, right panel showing neat cables and green connected status (printer-setup-before-after.dim_600x400.png)\n- Illustration of a technician holding a smartphone showing a cracked screen on the left and a repaired screen on the right (mobile-repair-demo.dim_600x400.png)\n- Illustration of a laptop on a desk showing a performance boost graphic with a speedometer going from slow to fast (laptop-fix-demo.dim_600x400.png)",
   "existing_features": [
     {
       "id": "feature-publish-the-current-version-of-the-app-to-production-so-it-is-live-and-accessible-to-users",
@@ -138,7 +140,72 @@
       "id": "feature-remove-all-payment-gate-checks-from-the-ticket-creation-flow-in-clientportal-and-ticketcreationform-customers-must-be-able-to-open-the-ticket-creation-dialog-and-submit-a-new-support-ticket-without-any-payment-plan-validation-stripe-razorpay-checks-or-subscription-status-checks-blocking-the-action-the-create-ticket-button-and-dialog-must-be-unconditionally-accessible-to-any-authenticated-customer",
       "title": "Remove all payment gate checks from the ticket creation flow in ClientPortal and TicketCreationForm. Customers must be able to open the ticket creation dialog and submit a new support ticket without any payment plan validation, Stripe/Razorpay checks, or subscription status checks blocking the action. The 'Create Ticket' button and dialog must be unconditionally accessible to any authenticated customer.",
       "reqIds": [
-        "REQ-19"
+        "REQ-19",
+        "REQ-21"
+      ],
+      "version": 2
+    },
+    {
+      "id": "feature-add-a-payment-toggle-control-switch-toggle-button-in-the-chatsection-component-that-is-visible-and-operable-only-by-expert-technician-users-when-the-toggle-is-enabled-for-a-specific-chat-session-ticket-the-backend-stores-the-payment-requested-state-for-that-session-the-customer-side-of-that-chat-must-detect-this-state-and-automatically-display-a-payment-popup-modal-prompting-the-customer-to-complete-a-payment",
+      "title": "Add a payment toggle control (switch/toggle button) in the ChatSection component that is visible and operable only by expert/technician users. When the toggle is enabled for a specific chat session/ticket, the backend stores the payment-requested state for that session. The customer side of that chat must detect this state and automatically display a payment popup/modal prompting the customer to complete a payment.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-integrate-payu-as-the-payment-gateway-for-the-customer-facing-payment-popup-triggered-by-the-expert-payment-toggle-the-backend-actor-must-store-a-payu-merchant-key-and-salt-configurable-when-the-customer-payment-popup-is-displayed-it-must-construct-and-submit-a-payu-payment-form-or-redirect-with-the-required-parameters-txnid-amount-productinfo-firstname-email-phone-surl-furl-hash-handle-the-success-failure-callbacks-and-update-the-ticket-session-payment-status-in-the-backend-accordingly",
+      "title": "Integrate PayU as the payment gateway for the customer-facing payment popup triggered by the expert payment toggle. The backend actor must store a PayU merchant key and salt (configurable). When the customer payment popup is displayed, it must construct and submit a PayU payment form (or redirect) with the required parameters (txnid, amount, productinfo, firstname, email, phone, surl, furl, hash). Handle the success/failure callbacks and update the ticket/session payment status in the backend accordingly.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-loginprompt-hero-landing-component-headline-and-description-to-reflect-everyday-device-support-set-the-headline-to-tech-support-expert-fast-fixes-for-laptops-desktops-mobiles-printers-10-years-experience-and-replace-any-existing-long-description-with-the-short-copy-jaipur-based-pro-fixing-your-laptops-desktops-mobiles-and-printers-remotely-or-on-site-quick-affordable-solutions-for-home-office-message-for-same-day-help",
+      "title": "Update the LoginPrompt (hero/landing) component headline and description to reflect everyday device support: set the headline to 'Tech Support Expert | Fast Fixes for Laptops, Desktops, Mobiles & Printers | 10+ Years Experience' and replace any existing long description with the short copy: 'Jaipur-based pro fixing your laptops, desktops, mobiles, and printers remotely or on-site. Quick, affordable solutions for home/office. Message for same-day help!'",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-skills-services-section-to-the-loginprompt-landing-page-listing-four-bullet-point-skills-laptop-desktop-troubleshooting-upgrades-mobile-repair-setup-android-ios-printer-connectivity-ink-issues-remote-support-via-chat-video",
+      "title": "Add a Skills/Services section to the LoginPrompt landing page listing four bullet-point skills: 'Laptop/Desktop troubleshooting & upgrades', 'Mobile repair/setup (Android/iOS)', 'Printer connectivity & ink issues', 'Remote support via chat/video'.",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-pricing-services-section-to-the-loginprompt-landing-page-displaying-three-clear-service-tiers-in-inr-basic-diagnostic-500-full-laptop-mobile-fix-1-500-printer-setup-800-each-tier-should-emphasize-a-24-48-hour-turnaround-promise",
+      "title": "Add a Pricing/Services section to the LoginPrompt landing page displaying three clear service tiers in INR: 'Basic Diagnostic: ₹500', 'Full Laptop/Mobile Fix: ₹1,500', 'Printer Setup: ₹800'. Each tier should emphasize a 24–48 hour turnaround promise.",
+      "reqIds": [
+        "REQ-26"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-testimonials-section-to-the-loginprompt-landing-page-with-at-least-three-short-client-quotes-fixed-my-printer-in-30-mins-laptop-running-smooth-again-and-one-additional-quote-about-mobile-repair-display-each-as-a-styled-testimonial-card-with-attribution",
+      "title": "Add a Testimonials section to the LoginPrompt landing page with at least three short client quotes: 'Fixed my printer in 30 mins!', 'Laptop running smooth again', and one additional quote about mobile repair. Display each as a styled testimonial card with attribution.",
+      "reqIds": [
+        "REQ-27"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-visuals-icons-strip-to-the-loginprompt-landing-page-with-clean-device-icons-for-laptop-mobile-phone-and-printer-rendered-inline-to-visually-reinforce-the-service-categories-add-a-banner-or-hero-tagline-element-reading-device-fixes-done-right-using-the-generated-banner-image-device-fixes-banner-dim-1200x400-png-and-device-icons-laptop-icon-dim-64x64-png-phone-icon-dim-64x64-png-printer-icon-dim-64x64-png-served-from-frontend-public-assets-generated",
+      "title": "Add a visuals/icons strip to the LoginPrompt landing page with clean device icons for laptop, mobile phone, and printer, rendered inline to visually reinforce the service categories. Add a banner or hero tagline element reading 'Device Fixes Done Right' using the generated banner image (device-fixes-banner.dim_1200x400.png) and device icons (laptop-icon.dim_64x64.png, phone-icon.dim_64x64.png, printer-icon.dim_64x64.png) served from frontend/public/assets/generated.",
+      "reqIds": [
+        "REQ-28"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-portfolio-work-samples-section-to-the-loginprompt-landing-page-showcasing-2-3-device-fix-scenarios-use-the-generated-portfolio-images-printer-setup-before-after-dim-600x400-png-mobile-repair-demo-dim-600x400-png-laptop-fix-demo-dim-600x400-png-served-from-frontend-public-assets-generated-with-short-captions-describing-each-scenario-e-g-before-after-printer-setup-mobile-screen-repair-demo-laptop-upgrade-complete",
+      "title": "Add a Portfolio/Work Samples section to the LoginPrompt landing page showcasing 2–3 device fix scenarios. Use the generated portfolio images (printer-setup-before-after.dim_600x400.png, mobile-repair-demo.dim_600x400.png, laptop-fix-demo.dim_600x400.png) served from frontend/public/assets/generated, with short captions describing each scenario (e.g., 'Before/After: Printer Setup', 'Mobile Screen Repair Demo', 'Laptop Upgrade Complete').",
+      "reqIds": [
+        "REQ-29"
       ],
       "version": 1
     }
@@ -258,6 +325,18 @@
       "reqIds": [
         "REQ-20"
       ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-23",
+      "summary": "Add a toggle button for payment option in chat; when enabled by expert, a payment popup is triggered on the customer screen so the customer can make a payment",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-24",
+      "summary": "Integrate PayU API as payment gateway for processing customer payments",
+      "reqIds": [],
       "status": "pending"
     }
   ],

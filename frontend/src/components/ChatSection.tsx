@@ -6,6 +6,7 @@ import {
   useSetTechnicianAvailability,
   useGetCallerUserProfile,
 } from '../hooks/useQueries';
+import { useGetToggleState, useSetToggleState } from '../hooks/usePaymentToggle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Send, User, Clock, MessageCircle, RefreshCw } from 'lucide-react';
+import { Send, User, Clock, MessageCircle, RefreshCw, CreditCard } from 'lucide-react';
 import { SupportTicket, TicketStatusOld } from '../backend';
 import { toast } from 'sonner';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
@@ -38,6 +39,22 @@ export default function ChatSection() {
     error: messagesError,
     refetch: refetchMessages,
   } = useGetChatMessages(selectedTicketId);
+
+  // Payment toggle state for the selected ticket
+  const { data: toggleState } = useGetToggleState(selectedTicketId);
+  const setToggleState = useSetToggleState(selectedTicketId);
+
+  // Local optimistic state for the payment toggle (technician side)
+  const [paymentToggleEnabled, setPaymentToggleEnabled] = useState(false);
+
+  // Sync local toggle state with backend state when ticket changes
+  useEffect(() => {
+    if (toggleState !== undefined && toggleState !== null) {
+      setPaymentToggleEnabled(toggleState.toggleEnabled);
+    } else {
+      setPaymentToggleEnabled(false);
+    }
+  }, [toggleState, selectedTicketId]);
 
   const sendMessageForTicket = useSendMessageForTicket();
   const setAvailability = useSetTechnicianAvailability();
@@ -107,6 +124,29 @@ export default function ChatSection() {
     }
   };
 
+  const handlePaymentToggle = async (checked: boolean) => {
+    if (!selectedTicket) {
+      toast.error('Please select a ticket first');
+      return;
+    }
+    try {
+      setPaymentToggleEnabled(checked); // optimistic update
+      await setToggleState.mutateAsync({
+        toggleEnabled: checked,
+        paymentRequested: checked,
+        stripeSessionId: null,
+      });
+      toast.success(
+        checked
+          ? 'Payment request sent to customer'
+          : 'Payment request cancelled'
+      );
+    } catch (error: any) {
+      setPaymentToggleEnabled(!checked); // revert on error
+      toast.error(error?.message || 'Failed to update payment toggle');
+    }
+  };
+
   const formatTime = (timestamp: bigint) => {
     const date = new Date(Number(timestamp) / 1_000_000);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -131,6 +171,7 @@ export default function ChatSection() {
   };
 
   const isResolved = selectedTicket?.status === TicketStatusOld.resolved;
+  const isTechnician = userProfile?.isTechnician === true;
 
   if (ticketsLoading) {
     return (
@@ -154,7 +195,7 @@ export default function ChatSection() {
             Support Chat
           </CardTitle>
           <CardDescription>
-            {userProfile?.isTechnician
+            {isTechnician
               ? 'No active support tickets. Wait for customers to create tickets.'
               : 'No active support tickets. Please create a support ticket from the My Portal tab to start chatting with a technician.'}
           </CardDescription>
@@ -167,7 +208,7 @@ export default function ChatSection() {
               className="mx-auto rounded-lg mb-6 max-w-xs"
             />
             <p className="text-muted-foreground mb-4">
-              {userProfile?.isTechnician
+              {isTechnician
                 ? 'You will see tickets here when customers need help'
                 : 'Once you have an active support ticket, you can chat directly with your assigned technician here.'}
             </p>
@@ -189,7 +230,7 @@ export default function ChatSection() {
         <CardHeader>
           <CardTitle className="text-lg">Support Tickets</CardTitle>
           {/* Availability toggle: only shown to technicians */}
-          {userProfile?.isTechnician && (
+          {isTechnician && (
             <div className="flex items-center space-x-2 pt-2">
               <Switch
                 id="availability"
@@ -240,19 +281,53 @@ export default function ChatSection() {
       {/* Chat Area */}
       <Card className="md:col-span-2">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
               <CardTitle>Chat</CardTitle>
               <CardDescription>
                 {selectedTicket && `Ticket #${selectedTicket.ticketId.toString()}`}
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {selectedTicket && (
                 <Badge className={`${getStatusColor(selectedTicket.status)} text-white`}>
                   {getStatusText(selectedTicket.status)}
                 </Badge>
               )}
+
+              {/* Payment Request Toggle — ONLY visible to technicians */}
+              {isTechnician && selectedTicket && !isResolved && (
+                <div
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl border"
+                  style={{
+                    borderColor: paymentToggleEnabled ? 'var(--primary)' : 'var(--border)',
+                    background: paymentToggleEnabled ? 'var(--primary)/10' : 'transparent',
+                  }}
+                >
+                  <CreditCard
+                    className="w-4 h-4"
+                    style={{
+                      color: paymentToggleEnabled ? 'var(--primary)' : 'var(--muted-foreground)',
+                    }}
+                  />
+                  <Label
+                    htmlFor="payment-toggle"
+                    className="text-xs font-medium cursor-pointer select-none"
+                    style={{
+                      color: paymentToggleEnabled ? 'var(--primary)' : 'var(--muted-foreground)',
+                    }}
+                  >
+                    Request Payment
+                  </Label>
+                  <Switch
+                    id="payment-toggle"
+                    checked={paymentToggleEnabled}
+                    onCheckedChange={handlePaymentToggle}
+                    disabled={setToggleState.isPending}
+                  />
+                </div>
+              )}
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -264,6 +339,21 @@ export default function ChatSection() {
               </Button>
             </div>
           </div>
+
+          {/* Payment toggle status indicator for technician */}
+          {isTechnician && selectedTicket && paymentToggleEnabled && (
+            <div
+              className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg text-xs font-medium"
+              style={{
+                background: 'oklch(0.95 0.05 200)',
+                color: 'var(--primary)',
+                border: '1px solid var(--primary)',
+              }}
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              Payment popup is now visible to the customer. Toggle off to cancel.
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {/* Messages area */}
@@ -328,7 +418,7 @@ export default function ChatSection() {
                         >
                           {isCurrentUser
                             ? 'You'
-                            : userProfile?.isTechnician
+                            : isTechnician
                             ? 'Customer'
                             : 'Technician'}
                         </span>

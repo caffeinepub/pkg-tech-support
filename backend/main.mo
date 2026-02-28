@@ -2,16 +2,18 @@ import Map "mo:core/Map";
 import List "mo:core/List";
 import Time "mo:core/Time";
 import Array "mo:core/Array";
+import Text "mo:core/Text";
 import Iter "mo:core/Iter";
 import Principal "mo:core/Principal";
 import Storage "blob-storage/Storage";
 import Int "mo:core/Int";
-import Text "mo:core/Text";
 import Runtime "mo:core/Runtime";
 import AccessControl "authorization/access-control";
 import Stripe "stripe/stripe";
 import OutCall "http-outcalls/outcall";
 import MixinStorage "blob-storage/Mixin";
+
+
 
 actor {
   include MixinStorage();
@@ -110,6 +112,9 @@ actor {
   let chatFeedback = Map.empty<Nat, ChatFeedback>();
   let checkoutSessions = Map.empty<Text, Principal>();
   let completedPayments = Map.empty<Principal, Bool>();
+
+  // Persistent map to track payment toggle state per ticket/session
+  let paymentToggleState = Map.empty<Nat, PaymentToggleState>();
 
   // Maps a messageId to the ticketId it belongs to
   let messageTicketIndex = Map.empty<Nat, Nat>();
@@ -282,9 +287,6 @@ actor {
     lastActionMap.add(caller, Time.now());
   };
 
-  // sendMessage: allows any authenticated user (#user role) to send a message
-  // within an active support session (ticket). Both customers and technicians
-  // can send messages as long as they are participants in an active ticket.
   public shared ({ caller }) func sendMessage(
     recipient : Principal,
     content : Text,
@@ -336,9 +338,6 @@ actor {
     #success;
   };
 
-  // sendMessageForTicket: allows customers or technicians to send a message
-  // scoped to a specific support ticket. Both participants of the ticket
-  // (customer and technician) are authorized to send messages.
   public shared ({ caller }) func sendMessageForTicket(
     ticketId : Nat,
     content : Text,
@@ -413,10 +412,6 @@ actor {
     count;
   };
 
-  // getChatMessages: fetches all messages for a specific support ticket.
-  // Only the customer or technician of that ticket (or an admin) can access
-  // the messages. This ensures customers can read their own chat history
-  // while being prevented from accessing other customers' sessions.
   public query ({ caller }) func getChatMessages(ticketId : Nat) : async [ChatMessage] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access chat messages");
@@ -536,8 +531,6 @@ actor {
     };
   };
 
-  // markTicketMessagesAsRead: marks all messages in a ticket as read for the caller.
-  // Only the customer or technician of the ticket can call this.
   public shared ({ caller }) func markTicketMessagesAsRead(ticketId : Nat) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can mark messages as read");
@@ -916,7 +909,7 @@ actor {
     };
   };
 
-  // updateTicketStatus: customers can reopen resolved tickets (per implementation plan),
+  // updateTicketStatus: customers can reopen resolved tickets,
   // technicians and admins can update to any status.
   public shared ({ caller }) func updateTicketStatus(ticketId : Nat, status : TicketStatusOld) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -974,7 +967,7 @@ actor {
           ticketId = ticket.ticketId;
           customer = ticket.customer;
           technician;
-          status = #inProgress;
+          status = ticket.status;
           messages = ticket.messages;
           feedback = ticket.feedback;
           createdAt = ticket.createdAt;
@@ -1253,7 +1246,23 @@ actor {
     };
   };
 
-  // Type definitions
+  // Persistent Fields for Payment Toggle State
+  public type PaymentToggleState = {
+    toggleEnabled : Bool;
+    paymentRequested : Bool;
+    stripeSessionId : ?Text;
+    customer : Principal;
+    technician : Principal;
+    active : Bool;
+  };
+
+  // Payment Toggle Type aliases
+  public type ToggleStatus = {
+    #enabled;
+    #disabled;
+    #notRequested;
+  };
+
   public type UserProfile = {
     displayName : Text;
     isTechnician : Bool;
@@ -1342,5 +1351,200 @@ actor {
     customer : Principal;
     publicMessages : [ChatMessage];
     privateMessages : [ChatMessage];
+  };
+
+  // Helper: verify caller is a technician (has #user permission and isTechnician profile flag)
+  func validateTechnician(caller : Principal) {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can perform this action");
+    };
+    switch (userProfiles.get(caller)) {
+      case (null) {
+        Runtime.trap("User profile not found. Please create a profile first")
+      };
+      case (?profile) {
+        if (not profile.isTechnician) {
+          Runtime.trap("Unauthorized: Only technicians can perform this action");
+        };
+      };
+    };
+  };
+
+  // Helper: verify caller is the technician of the given ticket
+  func validateTicketTechnician(caller : Principal, ticketId : Nat) {
+    validateTechnician(caller);
+    switch (supportTickets.get(ticketId)) {
+      case (null) {
+        Runtime.trap("Ticket does not exist");
+      };
+      case (?ticket) {
+        if (ticket.technician != caller) {
+          Runtime.trap("Unauthorized: Only the assigned technician can perform this action on this ticket");
+        };
+      };
+    };
+  };
+
+  // Set payment toggle state - only the assigned technician of the ticket may call this
+  public shared ({ caller }) func setToggleState(
+    ticketId : Nat,
+    toggleEnabled : Bool,
+    paymentRequested : Bool,
+    stripeSessionId : ?Text
+  ) : async () {
+    // Verify caller is a technician and is the assigned technician for this ticket
+    validateTicketTechnician(caller, ticketId);
+
+    switch (supportTickets.get(ticketId)) {
+      case (null) {
+        Runtime.trap("Ticket does not exist");
+      };
+      case (?ticket) {
+        let state : PaymentToggleState = {
+          toggleEnabled;
+          paymentRequested;
+          stripeSessionId;
+          customer = ticket.customer;
+          technician = caller;
+          active = toggleEnabled;
+        };
+        paymentToggleState.add(ticketId, state);
+      };
+    };
+  };
+
+  // Get payment toggle state for a ticket - only ticket participants (customer or technician) or admins
+  public query ({ caller }) func getToggleState(ticketId : Nat) : async ?PaymentToggleState {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access payment toggle state");
+    };
+
+    switch (supportTickets.get(ticketId)) {
+      case (null) {
+        Runtime.trap("Ticket does not exist");
+      };
+      case (?ticket) {
+        if (ticket.customer != caller and ticket.technician != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: Only ticket participants can view payment toggle state");
+        };
+        paymentToggleState.get(ticketId);
+      };
+    };
+  };
+
+  // Get persistent payment toggle status for UI - only ticket participants or admins
+  public query ({ caller }) func getPersistentToggleState(ticketId : Nat) : async ToggleStatus {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access payment toggle state");
+    };
+
+    switch (supportTickets.get(ticketId)) {
+      case (null) {
+        Runtime.trap("Ticket does not exist");
+      };
+      case (?ticket) {
+        if (ticket.customer != caller and ticket.technician != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: Only ticket participants can view payment toggle state");
+        };
+        switch (paymentToggleState.get(ticketId)) {
+          case (?state) {
+            if (state.toggleEnabled) { #enabled } else { #disabled };
+          };
+          case (null) { #notRequested };
+        };
+      };
+    };
+  };
+
+  // End chat session explicitly - only the assigned technician of the ticket may call this
+  public shared ({ caller }) func endChatSession(ticketId : Nat) : async () {
+    validateTicketTechnician(caller, ticketId);
+
+    switch (paymentToggleState.get(ticketId)) {
+      case (?state) {
+        paymentToggleState.add(
+          ticketId,
+          {
+            toggleEnabled = state.toggleEnabled;
+            paymentRequested = state.paymentRequested;
+            stripeSessionId = state.stripeSessionId;
+            customer = state.customer;
+            technician = state.technician;
+            active = false;
+          },
+        );
+      };
+      case (null) {
+        Runtime.trap("No chat session found for this ticket");
+      };
+    };
+  };
+
+  // Premium Chat Tiers
+  public type ChatTier = {
+    #basic;
+    #premium;
+    #sponsorship;
+  };
+
+  // Get available chat tiers - open to all authenticated users
+  public query ({ caller }) func getAvailableTiers() : async [ChatTier] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view available tiers");
+    };
+    [#basic, #premium, #sponsorship];
+  };
+
+  // Update tier selection state - only ticket participants
+  public query ({ caller }) func updateTierSelection(ticketId : Nat, tier : ChatTier) : async ChatTier {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can update tier selection");
+    };
+    switch (supportTickets.get(ticketId)) {
+      case (null) {
+        Runtime.trap("Ticket does not exist");
+      };
+      case (?ticket) {
+        if (ticket.customer != caller and ticket.technician != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: Only ticket participants can update tier selection");
+        };
+        tier;
+      };
+    };
+  };
+
+  public query ({ caller }) func tierSelectionInfo(
+    ticketId : Nat,
+    tier : ChatTier,
+    paymentStatus : Bool,
+  ) : async {
+    tier : ChatTier;
+    paymentStatus : Bool;
+  } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view tier selection info");
+    };
+    switch (supportTickets.get(ticketId)) {
+      case (null) {
+        Runtime.trap("Ticket does not exist");
+      };
+      case (?ticket) {
+        if (ticket.customer != caller and ticket.technician != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: Only ticket participants can view tier selection info");
+        };
+        {
+          tier;
+          paymentStatus;
+        };
+      };
+    };
+  };
+
+  // Get supported currencies - open to all authenticated users
+  public query ({ caller }) func getSupportedCurrencies() : async [Text] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view supported currencies");
+    };
+    ["USD", "EUR", "GBP"];
   };
 };

@@ -83,6 +83,11 @@ export const KBArticle = IDL.Record({
   'viewCount' : IDL.Nat,
   'category' : KnowledgeCategory,
 });
+export const ChatTier = IDL.Variant({
+  'sponsorship' : IDL.Null,
+  'premium' : IDL.Null,
+  'basic' : IDL.Null,
+});
 export const UserProfile = IDL.Record({
   'displayName' : IDL.Text,
   'isTechnician' : IDL.Bool,
@@ -115,12 +120,25 @@ export const PaymentRecord = IDL.Record({
   'timestamp' : IDL.Int,
   'amount' : IDL.Nat,
 });
+export const ToggleStatus = IDL.Variant({
+  'disabled' : IDL.Null,
+  'enabled' : IDL.Null,
+  'notRequested' : IDL.Null,
+});
 export const StripeSessionStatus = IDL.Variant({
   'completed' : IDL.Record({
     'userPrincipal' : IDL.Opt(IDL.Text),
     'response' : IDL.Text,
   }),
   'failed' : IDL.Record({ 'error' : IDL.Text }),
+});
+export const PaymentToggleState = IDL.Record({
+  'technician' : IDL.Principal,
+  'active' : IDL.Bool,
+  'toggleEnabled' : IDL.Bool,
+  'customer' : IDL.Principal,
+  'paymentRequested' : IDL.Bool,
+  'stripeSessionId' : IDL.Opt(IDL.Text),
 });
 export const MessageStatus = IDL.Variant({
   'success' : IDL.Null,
@@ -198,6 +216,7 @@ export const idlService = IDL.Service({
   'createSupportTicket' : IDL.Func([IDL.Principal], [SupportTicket], []),
   'deleteKBArticle' : IDL.Func([IDL.Nat], [], []),
   'deleteMessage' : IDL.Func([IDL.Nat], [], []),
+  'endChatSession' : IDL.Func([IDL.Nat], [], []),
   'getAdminTickets' : IDL.Func([], [IDL.Vec(SupportTicket)], ['query']),
   'getAllAvailableTechnicians' : IDL.Func(
       [],
@@ -223,6 +242,7 @@ export const idlService = IDL.Service({
       [IDL.Vec(KBArticle)],
       ['query'],
     ),
+  'getAvailableTiers' : IDL.Func([], [IDL.Vec(ChatTier)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getChatFeedback' : IDL.Func([IDL.Nat], [IDL.Opt(ChatFeedback)], ['query']),
@@ -240,13 +260,20 @@ export const idlService = IDL.Service({
       [IDL.Opt(PaymentRecord)],
       ['query'],
     ),
+  'getPersistentToggleState' : IDL.Func([IDL.Nat], [ToggleStatus], ['query']),
   'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
+  'getSupportedCurrencies' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
   'getTechnicianAvailability' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(TechnicianAvailability)],
       ['query'],
     ),
   'getTicket' : IDL.Func([IDL.Nat], [IDL.Opt(SupportTicket)], ['query']),
+  'getToggleState' : IDL.Func(
+      [IDL.Nat],
+      [IDL.Opt(PaymentToggleState)],
+      ['query'],
+    ),
   'getUserMessages' : IDL.Func([], [IDL.Vec(ChatMessage)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
@@ -275,7 +302,17 @@ export const idlService = IDL.Service({
   'setAllTechniciansOffline' : IDL.Func([], [], []),
   'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
   'setTechnicianAvailability' : IDL.Func([IDL.Bool], [], []),
+  'setToggleState' : IDL.Func(
+      [IDL.Nat, IDL.Bool, IDL.Bool, IDL.Opt(IDL.Text)],
+      [],
+      [],
+    ),
   'submitRating' : IDL.Func([IDL.Int, IDL.Text], [], []),
+  'tierSelectionInfo' : IDL.Func(
+      [IDL.Nat, ChatTier, IDL.Bool],
+      [IDL.Record({ 'paymentStatus' : IDL.Bool, 'tier' : ChatTier })],
+      ['query'],
+    ),
   'transform' : IDL.Func(
       [TransformationInput],
       [TransformationOutput],
@@ -288,6 +325,7 @@ export const idlService = IDL.Service({
     ),
   'updatePaymentStatus' : IDL.Func([IDL.Text, PaymentStatus], [], []),
   'updateTicketStatus' : IDL.Func([IDL.Nat, TicketStatusOld], [], []),
+  'updateTierSelection' : IDL.Func([IDL.Nat, ChatTier], [ChatTier], ['query']),
 });
 
 export const idlInitArgs = [];
@@ -368,6 +406,11 @@ export const idlFactory = ({ IDL }) => {
     'viewCount' : IDL.Nat,
     'category' : KnowledgeCategory,
   });
+  const ChatTier = IDL.Variant({
+    'sponsorship' : IDL.Null,
+    'premium' : IDL.Null,
+    'basic' : IDL.Null,
+  });
   const UserProfile = IDL.Record({
     'displayName' : IDL.Text,
     'isTechnician' : IDL.Bool,
@@ -400,12 +443,25 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : IDL.Int,
     'amount' : IDL.Nat,
   });
+  const ToggleStatus = IDL.Variant({
+    'disabled' : IDL.Null,
+    'enabled' : IDL.Null,
+    'notRequested' : IDL.Null,
+  });
   const StripeSessionStatus = IDL.Variant({
     'completed' : IDL.Record({
       'userPrincipal' : IDL.Opt(IDL.Text),
       'response' : IDL.Text,
     }),
     'failed' : IDL.Record({ 'error' : IDL.Text }),
+  });
+  const PaymentToggleState = IDL.Record({
+    'technician' : IDL.Principal,
+    'active' : IDL.Bool,
+    'toggleEnabled' : IDL.Bool,
+    'customer' : IDL.Principal,
+    'paymentRequested' : IDL.Bool,
+    'stripeSessionId' : IDL.Opt(IDL.Text),
   });
   const MessageStatus = IDL.Variant({
     'success' : IDL.Null,
@@ -480,6 +536,7 @@ export const idlFactory = ({ IDL }) => {
     'createSupportTicket' : IDL.Func([IDL.Principal], [SupportTicket], []),
     'deleteKBArticle' : IDL.Func([IDL.Nat], [], []),
     'deleteMessage' : IDL.Func([IDL.Nat], [], []),
+    'endChatSession' : IDL.Func([IDL.Nat], [], []),
     'getAdminTickets' : IDL.Func([], [IDL.Vec(SupportTicket)], ['query']),
     'getAllAvailableTechnicians' : IDL.Func(
         [],
@@ -505,6 +562,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(KBArticle)],
         ['query'],
       ),
+    'getAvailableTiers' : IDL.Func([], [IDL.Vec(ChatTier)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getChatFeedback' : IDL.Func([IDL.Nat], [IDL.Opt(ChatFeedback)], ['query']),
@@ -522,13 +580,20 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(PaymentRecord)],
         ['query'],
       ),
+    'getPersistentToggleState' : IDL.Func([IDL.Nat], [ToggleStatus], ['query']),
     'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
+    'getSupportedCurrencies' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'getTechnicianAvailability' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(TechnicianAvailability)],
         ['query'],
       ),
     'getTicket' : IDL.Func([IDL.Nat], [IDL.Opt(SupportTicket)], ['query']),
+    'getToggleState' : IDL.Func(
+        [IDL.Nat],
+        [IDL.Opt(PaymentToggleState)],
+        ['query'],
+      ),
     'getUserMessages' : IDL.Func([], [IDL.Vec(ChatMessage)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
@@ -557,7 +622,17 @@ export const idlFactory = ({ IDL }) => {
     'setAllTechniciansOffline' : IDL.Func([], [], []),
     'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
     'setTechnicianAvailability' : IDL.Func([IDL.Bool], [], []),
+    'setToggleState' : IDL.Func(
+        [IDL.Nat, IDL.Bool, IDL.Bool, IDL.Opt(IDL.Text)],
+        [],
+        [],
+      ),
     'submitRating' : IDL.Func([IDL.Int, IDL.Text], [], []),
+    'tierSelectionInfo' : IDL.Func(
+        [IDL.Nat, ChatTier, IDL.Bool],
+        [IDL.Record({ 'paymentStatus' : IDL.Bool, 'tier' : ChatTier })],
+        ['query'],
+      ),
     'transform' : IDL.Func(
         [TransformationInput],
         [TransformationOutput],
@@ -570,6 +645,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'updatePaymentStatus' : IDL.Func([IDL.Text, PaymentStatus], [], []),
     'updateTicketStatus' : IDL.Func([IDL.Nat, TicketStatusOld], [], []),
+    'updateTierSelection' : IDL.Func(
+        [IDL.Nat, ChatTier],
+        [ChatTier],
+        ['query'],
+      ),
   });
 };
 

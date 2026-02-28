@@ -27,6 +27,9 @@ export interface ChatMessage {
   'delivered' : boolean,
   'attachment' : [] | [ExternalBlob],
 }
+export type ChatTier = { 'sponsorship' : null } |
+  { 'premium' : null } |
+  { 'basic' : null };
 export type ExternalBlob = Uint8Array;
 export interface KBArticle {
   'id' : bigint,
@@ -65,6 +68,14 @@ export interface PaymentRecord {
 export type PaymentStatus = { 'pending' : null } |
   { 'completed' : null } |
   { 'failed' : null };
+export interface PaymentToggleState {
+  'technician' : Principal,
+  'active' : boolean,
+  'toggleEnabled' : boolean,
+  'customer' : Principal,
+  'paymentRequested' : boolean,
+  'stripeSessionId' : [] | [string],
+}
 export interface ShoppingItem {
   'productName' : string,
   'currency' : string,
@@ -98,6 +109,9 @@ export interface TechnicianAvailability {
 export type TicketStatusOld = { 'resolved' : null } |
   { 'open' : null } |
   { 'inProgress' : null };
+export type ToggleStatus = { 'disabled' : null } |
+  { 'enabled' : null } |
+  { 'notRequested' : null };
 export interface TransformationInput {
   'context' : Uint8Array,
   'response' : http_request_result,
@@ -164,6 +178,7 @@ export interface _SERVICE {
   'createSupportTicket' : ActorMethod<[Principal], SupportTicket>,
   'deleteKBArticle' : ActorMethod<[bigint], undefined>,
   'deleteMessage' : ActorMethod<[bigint], undefined>,
+  'endChatSession' : ActorMethod<[bigint], undefined>,
   'getAdminTickets' : ActorMethod<[], Array<SupportTicket>>,
   'getAllAvailableTechnicians' : ActorMethod<[], Array<TechnicianAvailability>>,
   'getAllKBArticles' : ActorMethod<[], Array<KBArticle>>,
@@ -178,6 +193,7 @@ export interface _SERVICE {
     }
   >,
   'getArticlesByCategory' : ActorMethod<[KnowledgeCategory], Array<KBArticle>>,
+  'getAvailableTiers' : ActorMethod<[], Array<ChatTier>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getChatFeedback' : ActorMethod<[bigint], [] | [ChatFeedback]>,
@@ -190,12 +206,15 @@ export interface _SERVICE {
     Array<ChatMessage>
   >,
   'getPaymentRecord' : ActorMethod<[string], [] | [PaymentRecord]>,
+  'getPersistentToggleState' : ActorMethod<[bigint], ToggleStatus>,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
+  'getSupportedCurrencies' : ActorMethod<[], Array<string>>,
   'getTechnicianAvailability' : ActorMethod<
     [Principal],
     [] | [TechnicianAvailability]
   >,
   'getTicket' : ActorMethod<[bigint], [] | [SupportTicket]>,
+  'getToggleState' : ActorMethod<[bigint], [] | [PaymentToggleState]>,
   'getUserMessages' : ActorMethod<[], Array<ChatMessage>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'getUserTickets' : ActorMethod<[], Array<SupportTicket>>,
@@ -218,7 +237,15 @@ export interface _SERVICE {
   'setAllTechniciansOffline' : ActorMethod<[], undefined>,
   'setStripeConfiguration' : ActorMethod<[StripeConfiguration], undefined>,
   'setTechnicianAvailability' : ActorMethod<[boolean], undefined>,
+  'setToggleState' : ActorMethod<
+    [bigint, boolean, boolean, [] | [string]],
+    undefined
+  >,
   'submitRating' : ActorMethod<[bigint, string], undefined>,
+  'tierSelectionInfo' : ActorMethod<
+    [bigint, ChatTier, boolean],
+    { 'paymentStatus' : boolean, 'tier' : ChatTier }
+  >,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'updateKBArticle' : ActorMethod<
     [bigint, string, KnowledgeCategory, string, Array<string>],
@@ -226,6 +253,7 @@ export interface _SERVICE {
   >,
   'updatePaymentStatus' : ActorMethod<[string, PaymentStatus], undefined>,
   'updateTicketStatus' : ActorMethod<[bigint, TicketStatusOld], undefined>,
+  'updateTierSelection' : ActorMethod<[bigint, ChatTier], ChatTier>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

@@ -1,67 +1,101 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix customer chat history visibility, enable customer replies, and remove payment gate from ticket creation",
+  "title": "Update Expert Profile & Landing Page for Everyday Device Support Focus",
   "requirements": [
     {
-      "id": "REQ-17",
-      "summary": "Fix ChatSection component so customers can see full chat message history for their active support sessions",
+      "id": "REQ-24",
+      "summary": "Update LoginPrompt hero headline and description to reflect everyday device support (laptops, desktops, mobiles, printers) with Jaipur-based expert positioning",
       "acceptanceCriteria": [
-        "When a customer opens a chat session tied to a ticket, all previous messages (both customer and technician messages) are visible in the chat window.",
-        "Messages are displayed in chronological order with correct sender attribution.",
-        "The chat history persists across page refreshes for the customer.",
-        "No console errors related to message fetching or principal filtering appear on the customer side."
+        "The hero/landing page displays the exact headline: 'Tech Support Expert | Fast Fixes for Laptops, Desktops, Mobiles & Printers | 10+ Years Experience'",
+        "The description on the landing page is 3–4 lines and matches the specified copy exactly",
+        "No references to AWS, cloud, or old headline text remain on the landing page"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/ChatSection.tsx",
+          "path": "frontend/src/components/LoginPrompt.tsx",
           "operation": "modify",
-          "description": "Fix the getChatMessages query to properly fetch and display all chat messages for customers. Debug and resolve any principal mismatch issues in the useQuery call that fetches messages from the backend. Ensure the messages query is enabled when a ticket is selected and properly filters messages by ticketId. Verify that the message list renders all fetched messages in chronological order with correct sender attribution (customer vs technician). Add error handling and loading states to surface any query failures to the user. Ensure the chat history persists across page refreshes by relying on React Query's caching behavior."
+          "description": "Replace the existing headline with 'Tech Support Expert | Fast Fixes for Laptops, Desktops, Mobiles & Printers | 10+ Years Experience' and update the description to the exact copy: 'Jaipur-based pro fixing your laptops, desktops, mobiles, and printers remotely or on-site. Quick, affordable solutions for home/office. Message for same-day help!' Remove any AWS or cloud-related messaging from the component."
         }
       ]
     },
     {
-      "id": "REQ-18",
-      "summary": "Fix ChatSection component so customers can type and send reply messages in active chat sessions",
+      "id": "REQ-25",
+      "summary": "Add a Skills/Services section to the LoginPrompt with four bullet-point skills covering device troubleshooting, mobile repair, printer support, and remote assistance",
       "acceptanceCriteria": [
-        "The chat message input field is visible and editable for authenticated customers.",
-        "The send button is enabled and submits the customer's message to the backend successfully.",
-        "After sending, the new message appears in the chat thread without requiring a manual refresh.",
-        "Customers cannot send messages to sessions that do not belong to them.",
-        "No permission errors or silent failures occur when a customer submits a message."
+        "A clearly labeled 'Skills' or 'Services' section appears on the landing page",
+        "All four bullet items are displayed exactly as specified",
+        "No cloud/AWS-related skills appear in this section"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/ChatSection.tsx",
+          "path": "frontend/src/components/LoginPrompt.tsx",
           "operation": "modify",
-          "description": "Fix the message input and send functionality for customers. Ensure the message input field and send button are rendered and functional for customers (not just technicians). Debug and resolve any role-check or conditional rendering issues that hide the input controls from customers. Verify that the sendMessageForTicket mutation is called correctly with the selected ticketId and message content. Add proper error handling and toast notifications for successful message submission or failures. Ensure the chat messages list automatically updates after sending a new message by invalidating the relevant React Query cache. Prevent customers from sending messages to tickets that don't belong to them by validating ownership before submission."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Review and fix the useSendMessageForTicket mutation hook to ensure it properly calls the backend actor's sendMessageForTicket function and handles both success and error responses. Ensure proper cache invalidation occurs after a successful message send to trigger an immediate UI update. Add appropriate error handling and user feedback for permission errors or silent failures."
+          "description": "Add a new 'Skills' or 'Services' section below the hero description displaying exactly four bullet points: 'Laptop/Desktop troubleshooting & upgrades', 'Mobile repair/setup (Android/iOS)', 'Printer connectivity & ink issues', 'Remote support via chat/video'. Use consistent styling with the rest of the component and ensure the section is visually distinct."
         }
       ]
     },
     {
-      "id": "REQ-19",
-      "summary": "Remove all payment gate checks from ticket creation flow in ClientPortal and TicketCreationForm",
+      "id": "REQ-26",
+      "summary": "Add a Pricing/Services section to LoginPrompt displaying three service tiers in INR with 24–48 hour turnaround promise",
       "acceptanceCriteria": [
-        "The 'Create Ticket' button in ClientPortal is visible and clickable for all authenticated customers regardless of payment/plan status.",
-        "No payment prompt, paywall dialog, or plan-upgrade message appears before or during ticket creation.",
-        "Submitting the ticket creation form successfully creates a ticket in the backend and shows it in the customer's ticket list.",
-        "Removing the payment gate does not break any other payment-related features (PaymentSection, service plans)."
+        "A Pricing or Services section is visible on the landing page with exactly three tiers",
+        "All prices are displayed in INR (₹) with the specified amounts",
+        "Each tier card/row includes a '24–48 hour turnaround' note"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/ClientPortal.tsx",
+          "path": "frontend/src/components/LoginPrompt.tsx",
           "operation": "modify",
-          "description": "Remove all payment gate checks that conditionally render or disable the 'Create Ticket' button. Delete any code that checks for payment plan validation, subscription status, or Stripe/Razorpay verification before allowing users to open the ticket creation dialog. Ensure the ticket creation dialog is unconditionally accessible to any authenticated customer. Preserve all other payment-related UI elements and functionality (PaymentSection display, service plan browsing) without modification."
-        },
+          "description": "Add a new 'Pricing' or 'Services' section with three clearly defined service tiers: 'Basic Diagnostic: ₹500', 'Full Laptop/Mobile Fix: ₹1,500', 'Printer Setup: ₹800'. Each tier must display the price in INR (₹) and include a '24–48 hour turnaround' note. Use card or column layout for visual clarity and ensure consistent spacing with other sections."
+        }
+      ]
+    },
+    {
+      "id": "REQ-27",
+      "summary": "Add a Testimonials section to LoginPrompt with at least three short client quotes displayed as styled testimonial cards",
+      "acceptanceCriteria": [
+        "A Testimonials section appears on the landing page with at least 3 testimonial cards",
+        "The two specified quotes are present verbatim",
+        "Each card includes a quote and a placeholder customer name/attribution"
+      ],
+      "file_operations": [
         {
-          "path": "frontend/src/components/TicketCreationForm.tsx",
+          "path": "frontend/src/components/LoginPrompt.tsx",
           "operation": "modify",
-          "description": "Remove any payment status checks, plan verification logic, or subscription validation that blocks ticket submission. Ensure the form submission handler directly calls the createSupportTicket mutation without any payment-related pre-checks. Verify that successful ticket creation updates the user's ticket list and closes the dialog. Preserve proper error handling for invalid form data or backend failures unrelated to payments."
+          "description": "Add a 'Testimonials' section containing at least three testimonial cards. Include these exact quotes: 'Fixed my printer in 30 mins!', 'Laptop running smooth again', and one additional quote about mobile repair (e.g., 'Phone screen replaced same day!'). Each card must display the quote text and a placeholder customer name/attribution. Style the cards consistently with the rest of the component using shadow, padding, and proper typography."
+        }
+      ]
+    },
+    {
+      "id": "REQ-28",
+      "summary": "Add banner and device icons strip to LoginPrompt using generated images (device-fixes-banner, laptop-icon, phone-icon, printer-icon) from frontend/public/assets/generated",
+      "acceptanceCriteria": [
+        "Three device icons (laptop, phone, printer) are displayed on the landing page",
+        "A banner or prominent element shows the text 'Device Fixes Done Right'",
+        "All images are loaded from frontend/public/assets/generated"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/LoginPrompt.tsx",
+          "operation": "modify",
+          "description": "Add a banner element displaying the generated image frontend/public/assets/generated/device-fixes-banner.dim_1200x400.png with the tagline 'Device Fixes Done Right'. Below the banner, add an inline icons strip rendering the three device icons: frontend/public/assets/generated/laptop-icon.dim_64x64.png, frontend/public/assets/generated/phone-icon.dim_64x64.png, and frontend/public/assets/generated/printer-icon.dim_64x64.png. Ensure images are loaded from the exact workspace paths and rendered with appropriate sizing and spacing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-29",
+      "summary": "Add a Portfolio/Work Samples section to LoginPrompt showcasing 2–3 device fix scenarios using generated portfolio images from frontend/public/assets/generated",
+      "acceptanceCriteria": [
+        "A Portfolio or Work Samples section is visible on the landing page",
+        "2–3 image cards are displayed with captions describing each fix scenario",
+        "All images are loaded from frontend/public/assets/generated"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/LoginPrompt.tsx",
+          "operation": "modify",
+          "description": "Add a 'Portfolio' or 'Work Samples' section displaying 2–3 image cards with the generated portfolio images: frontend/public/assets/generated/printer-setup-before-after.dim_600x400.png (caption: 'Before/After: Printer Setup'), frontend/public/assets/generated/mobile-repair-demo.dim_600x400.png (caption: 'Mobile Screen Repair Demo'), and frontend/public/assets/generated/laptop-fix-demo.dim_600x400.png (caption: 'Laptop Upgrade Complete'). Each card must display the image and its corresponding caption. Ensure images are loaded from the exact workspace paths and styled consistently with proper aspect ratios."
         }
       ]
     }

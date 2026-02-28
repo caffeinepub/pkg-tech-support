@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Ticket, AlertCircle } from 'lucide-react';
+import { Loader2, Ticket, AlertCircle, CheckCircle } from 'lucide-react';
 import { useGetAllAvailableTechnicians } from '../hooks/useQueries';
 import { useActor } from '../hooks/useActor';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -42,7 +42,7 @@ export default function TicketCreationForm({ onSuccess, onCancel }: TicketCreati
       onSuccess?.(ticket);
     },
     onError: (err: Error) => {
-      // Surface the backend error message directly — no payment gate on the frontend
+      // Surface the backend error message directly
       const msg = err.message || 'Failed to create ticket. Please try again.';
       setError(msg);
     },
@@ -70,6 +70,15 @@ export default function TicketCreationForm({ onSuccess, onCancel }: TicketCreati
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Free ticket notice */}
+      <div
+        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
+        style={{ background: 'oklch(0.95 0.05 160)', color: 'oklch(0.35 0.12 160)' }}
+      >
+        <CheckCircle className="w-4 h-4 flex-shrink-0" />
+        <span>Creating a support ticket is <strong>free</strong>. No payment required.</span>
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="ticket-title">Title</Label>
         <Input
@@ -165,7 +174,7 @@ export default function TicketCreationForm({ onSuccess, onCancel }: TicketCreati
             </>
           ) : (
             <>
-              <Ticket className="w-4 h-4 mr-2" /> Create Ticket
+              <Ticket className="w-4 h-4 mr-2" /> Create Ticket (Free)
             </>
           )}
         </Button>

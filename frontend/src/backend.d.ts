@@ -19,6 +19,19 @@ export interface UserProfile {
     isTechnician: boolean;
     avatar?: ExternalBlob;
 }
+export interface TransformationOutput {
+    status: bigint;
+    body: Uint8Array;
+    headers: Array<http_header>;
+}
+export interface PaymentToggleState {
+    technician: Principal;
+    active: boolean;
+    toggleEnabled: boolean;
+    customer: Principal;
+    paymentRequested: boolean;
+    stripeSessionId?: string;
+}
 export interface KBArticle {
     id: bigint;
     title: string;
@@ -28,11 +41,6 @@ export interface KBArticle {
     updatedAt: bigint;
     viewCount: bigint;
     category: KnowledgeCategory;
-}
-export interface TransformationOutput {
-    status: bigint;
-    body: Uint8Array;
-    headers: Array<http_header>;
 }
 export interface PaymentRecord {
     status: PaymentStatus;
@@ -49,13 +57,6 @@ export interface LoginEvent {
     timestamp: bigint;
     principalId: string;
 }
-export interface ChatFeedback {
-    customer: Principal;
-    submittedAt: bigint;
-    comment: string;
-    sessionId: bigint;
-    rating: bigint;
-}
 export interface http_header {
     value: string;
     name: string;
@@ -64,6 +65,13 @@ export interface http_request_result {
     status: bigint;
     body: Uint8Array;
     headers: Array<http_header>;
+}
+export interface ChatFeedback {
+    customer: Principal;
+    submittedAt: bigint;
+    comment: string;
+    sessionId: bigint;
+    rating: bigint;
 }
 export interface ShoppingItem {
     productName: string;
@@ -127,6 +135,11 @@ export interface SupportTicket {
     ticketId: bigint;
     updatedAt: bigint;
 }
+export enum ChatTier {
+    sponsorship = "sponsorship",
+    premium = "premium",
+    basic = "basic"
+}
 export enum KnowledgeCategory {
     NetworkConnectivity = "NetworkConnectivity",
     AccountPasswords = "AccountPasswords",
@@ -146,6 +159,11 @@ export enum TicketStatusOld {
     open = "open",
     inProgress = "inProgress"
 }
+export enum ToggleStatus {
+    disabled = "disabled",
+    enabled = "enabled",
+    notRequested = "notRequested"
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -162,6 +180,7 @@ export interface backendInterface {
     createSupportTicket(technician: Principal): Promise<SupportTicket>;
     deleteKBArticle(articleId: bigint): Promise<void>;
     deleteMessage(messageId: bigint): Promise<void>;
+    endChatSession(ticketId: bigint): Promise<void>;
     getAdminTickets(): Promise<Array<SupportTicket>>;
     getAllAvailableTechnicians(): Promise<Array<TechnicianAvailability>>;
     getAllKBArticles(): Promise<Array<KBArticle>>;
@@ -173,6 +192,7 @@ export interface backendInterface {
         totalTickets: bigint;
     }>;
     getArticlesByCategory(category: KnowledgeCategory): Promise<Array<KBArticle>>;
+    getAvailableTiers(): Promise<Array<ChatTier>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getChatFeedback(sessionId: bigint): Promise<ChatFeedback | null>;
@@ -182,9 +202,12 @@ export interface backendInterface {
     getLoginEventsCSV(): Promise<string>;
     getMessagesBetweenUsers(user1: Principal, user2: Principal): Promise<Array<ChatMessage>>;
     getPaymentRecord(paymentId: string): Promise<PaymentRecord | null>;
+    getPersistentToggleState(ticketId: bigint): Promise<ToggleStatus>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
+    getSupportedCurrencies(): Promise<Array<string>>;
     getTechnicianAvailability(technician: Principal): Promise<TechnicianAvailability | null>;
     getTicket(ticketId: bigint): Promise<SupportTicket | null>;
+    getToggleState(ticketId: bigint): Promise<PaymentToggleState | null>;
     getUserMessages(): Promise<Array<ChatMessage>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     getUserTickets(): Promise<Array<SupportTicket>>;
@@ -201,9 +224,15 @@ export interface backendInterface {
     setAllTechniciansOffline(): Promise<void>;
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
     setTechnicianAvailability(isAvailable: boolean): Promise<void>;
+    setToggleState(ticketId: bigint, toggleEnabled: boolean, paymentRequested: boolean, stripeSessionId: string | null): Promise<void>;
     submitRating(rating: bigint, comment: string): Promise<void>;
+    tierSelectionInfo(ticketId: bigint, tier: ChatTier, paymentStatus: boolean): Promise<{
+        paymentStatus: boolean;
+        tier: ChatTier;
+    }>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     updateKBArticle(articleId: bigint, title: string, category: KnowledgeCategory, body: string, tags: Array<string>): Promise<void>;
     updatePaymentStatus(paymentId: string, status: PaymentStatus): Promise<void>;
     updateTicketStatus(ticketId: bigint, status: TicketStatusOld): Promise<void>;
+    updateTierSelection(ticketId: bigint, tier: ChatTier): Promise<ChatTier>;
 }

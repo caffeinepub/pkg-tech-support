@@ -1,10 +1,68 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageCircle, LayoutDashboard, BookOpen, CreditCard } from 'lucide-react';
 import ChatSection from './ChatSection';
 import ClientPortal from './ClientPortal';
 import KnowledgeBaseView from './KnowledgeBaseView';
 import PaymentSection from './PaymentSection';
+import PaymentRequestModal from './PaymentRequestModal';
+import { useGetUserTickets } from '../hooks/useQueries';
+import { useGetToggleState } from '../hooks/usePaymentToggle';
+import { useGetCallerUserProfile } from '../hooks/useQueries';
+import { TicketStatusOld } from '../backend';
+
+/**
+ * Inner component that polls the payment toggle state for a specific ticket.
+ * Renders the PaymentRequestModal when the technician has enabled payment for that ticket.
+ */
+function PaymentModalController() {
+  const { data: userProfile } = useGetCallerUserProfile();
+  const { data: tickets = [] } = useGetUserTickets();
+  const [dismissedTickets, setDismissedTickets] = useState<Set<string>>(new Set());
+
+  // Find the first active (non-resolved) ticket for this customer
+  const activeTicket = tickets.find(
+    (t) =>
+      !userProfile?.isTechnician &&
+      (t.status === TicketStatusOld.open || t.status === TicketStatusOld.inProgress)
+  );
+
+  const activeTicketId = activeTicket?.ticketId ?? null;
+
+  // Poll the toggle state for the active ticket
+  const { data: toggleState } = useGetToggleState(activeTicketId);
+
+  const paymentRequested = toggleState?.paymentRequested === true && toggleState?.toggleEnabled === true;
+  const ticketKey = activeTicketId?.toString() ?? '';
+  const isDismissed = dismissedTickets.has(ticketKey);
+
+  const showModal = paymentRequested && !isDismissed && !!activeTicketId && !userProfile?.isTechnician;
+
+  const handleClose = () => {
+    if (ticketKey) {
+      setDismissedTickets((prev) => new Set(prev).add(ticketKey));
+    }
+  };
+
+  // Re-show modal if technician re-enables payment after customer dismissed
+  useEffect(() => {
+    if (!paymentRequested && ticketKey) {
+      setDismissedTickets((prev) => {
+        const next = new Set(prev);
+        next.delete(ticketKey);
+        return next;
+      });
+    }
+  }, [paymentRequested, ticketKey]);
+
+  return (
+    <PaymentRequestModal
+      ticketId={activeTicketId}
+      isOpen={showModal}
+      onClose={handleClose}
+    />
+  );
+}
 
 export default function CustomerDashboard() {
   return (
@@ -64,6 +122,9 @@ export default function CustomerDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Payment modal controller — always mounted so it can poll and show modal regardless of active tab */}
+      <PaymentModalController />
     </div>
   );
 }
