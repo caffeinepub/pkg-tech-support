@@ -1,141 +1,112 @@
 {
   "kind": "build_request",
-  "title": "Update Expert Profile & Landing Page for Everyday Device Support Focus",
-  "projectName": "Caffeine Tech Support",
-  "priority": "normal",
+  "title": "Fix history display on customer/expert pages and remove payment option from ticket creation",
+  "projectName": "TechSupport Platform",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-24",
-      "text": "Update the LoginPrompt (hero/landing) component headline and description to reflect everyday device support: set the headline to 'Tech Support Expert | Fast Fixes for Laptops, Desktops, Mobiles & Printers | 10+ Years Experience' and replace any existing long description with the short copy: 'Jaipur-based pro fixing your laptops, desktops, mobiles, and printers remotely or on-site. Quick, affordable solutions for home/office. Message for same-day help!'",
+      "id": "REQ-1",
+      "text": "Remove the payment option (payment field, payment toggle, or any payment-related UI element) from the ticket creation form in the CustomerDashboard so customers cannot set payment details when creating a new ticket.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Headline Update: Change to \"Tech Support Expert | Fast Fixes for Laptops, Desktops, Mobiles & Printers | 10+ Years Experience\"",
-          "Description Shorten: Limit to 3-4 lines: \"Jaipur-based pro fixing your laptops, desktops, mobiles, and printers remotely or on-site. Quick, affordable solutions for home/office. Message for same-day help!\""
+          "remove the payment option while creating the ticket from customer dashboard"
         ]
       },
       "acceptanceCriteria": [
-        "The hero/landing page displays the exact headline: 'Tech Support Expert | Fast Fixes for Laptops, Desktops, Mobiles & Printers | 10+ Years Experience'",
-        "The description on the landing page is 3–4 lines and matches the specified copy exactly",
-        "No references to AWS, cloud, or old headline text remain on the landing page"
+        "The TicketCreationForm component does not render any payment-related fields or toggles.",
+        "A new ticket can be created without any payment input.",
+        "No payment data is submitted as part of ticket creation."
       ]
     },
     {
-      "id": "REQ-25",
-      "text": "Add a Skills/Services section to the LoginPrompt landing page listing four bullet-point skills: 'Laptop/Desktop troubleshooting & upgrades', 'Mobile repair/setup (Android/iOS)', 'Printer connectivity & ink issues', 'Remote support via chat/video'.",
+      "id": "REQ-2",
+      "text": "Fix the expert/technician's payment request toggle in the ChatSection so that toggling the payment button opens the payment request popup/modal correctly. The modal must appear when the expert activates the payment toggle.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Skills Section: List simple bullets like \"Laptop/Desktop troubleshooting & upgrades, Mobile repair/setup (Android/iOS), Printer connectivity & ink issues, Remote support via chat/video\""
+          "expert is tryg to send the payment option by toggle button nut pop up is not coming"
         ]
       },
       "acceptanceCriteria": [
-        "A clearly labeled 'Skills' or 'Services' section appears on the landing page",
-        "All four bullet items are displayed exactly as specified",
-        "No cloud/AWS-related skills appear in this section"
+        "When the expert clicks the payment toggle in ChatSection, the PaymentRequestModal (or equivalent payment popup) opens.",
+        "The modal displays the correct payment details for the active ticket.",
+        "Closing or dismissing the modal resets the toggle state appropriately."
       ]
     },
     {
-      "id": "REQ-26",
-      "text": "Add a Pricing/Services section to the LoginPrompt landing page displaying three clear service tiers in INR: 'Basic Diagnostic: ₹500', 'Full Laptop/Mobile Fix: ₹1,500', 'Printer Setup: ₹800'. Each tier should emphasize a 24–48 hour turnaround promise.",
-      "target": "frontend",
+      "id": "REQ-3",
+      "text": "Fix the Service History / history tab on the CustomerDashboard (ClientPortal) so that resolved tickets and past interactions are correctly fetched from the backend and displayed. The history list must not be empty when resolved tickets exist.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-3"
         ],
         "quotes": [
-          "Pricing/Services: Offer clear tiers, e.g., \"Basic diagnostic: ₹500; Full laptop/mobile fix: ₹1,500; Printer setup: ₹800\" – use INR, emphasize 24-48 hour turnaround."
+          "customer and expert page are not showing history"
         ]
       },
       "acceptanceCriteria": [
-        "A Pricing or Services section is visible on the landing page with exactly three tiers",
-        "All prices are displayed in INR (₹) with the specified amounts",
-        "Each tier card/row includes a '24–48 hour turnaround' note"
+        "The 'Service History' or history tab in the CustomerDashboard renders all resolved tickets associated with the logged-in customer.",
+        "The ServiceHistoryTimeline component receives and displays non-empty data when resolved tickets exist in the backend.",
+        "Loading and empty states are handled gracefully with appropriate messages."
       ]
     },
     {
-      "id": "REQ-27",
-      "text": "Add a Testimonials section to the LoginPrompt landing page with at least three short client quotes: 'Fixed my printer in 30 mins!', 'Laptop running smooth again', and one additional quote about mobile repair. Display each as a styled testimonial card with attribution.",
-      "target": "frontend",
+      "id": "REQ-4",
+      "text": "Fix the history/ticket history section on the ExpertDashboard so that past and resolved tickets handled by the expert are correctly fetched and displayed. The list must not be empty when historical ticket data exists.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-3"
         ],
         "quotes": [
-          "Testimonials: Include short quotes like \"Fixed my printer in 30 mins!\" or \"Laptop running smooth again\" – add 2-3 even if self-generated for starters."
+          "customer and expert page are not showing history"
         ]
       },
       "acceptanceCriteria": [
-        "A Testimonials section appears on the landing page with at least 3 testimonial cards",
-        "The two specified quotes are present verbatim",
-        "Each card includes a quote and a placeholder customer name/attribution"
+        "The ExpertDashboard's ticket history section renders resolved or closed tickets assigned to the logged-in technician.",
+        "The correct backend query is called (e.g., filtering by technician principal or resolved status) and results are passed to the UI.",
+        "Loading and empty states are handled gracefully."
       ]
     },
     {
-      "id": "REQ-28",
-      "text": "Add a visuals/icons strip to the LoginPrompt landing page with clean device icons for laptop, mobile phone, and printer, rendered inline to visually reinforce the service categories. Add a banner or hero tagline element reading 'Device Fixes Done Right' using the generated banner image (device-fixes-banner.dim_1200x400.png) and device icons (laptop-icon.dim_64x64.png, phone-icon.dim_64x64.png, printer-icon.dim_64x64.png) served from frontend/public/assets/generated.",
-      "target": "frontend",
+      "id": "REQ-5",
+      "text": "Resolve the deployment error that caused the previous build to fail. Audit the backend Motoko actor (backend/main.mo) and frontend entry files for any compilation or runtime errors, fix type mismatches, missing imports, or malformed function signatures, and ensure the project builds and deploys successfully.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-2"
         ],
         "quotes": [
-          "Visuals Refresh: Use clean icons for each device (laptop, phone, printer); add a friendly photo or simple banner saying \"Device Fixes Done Right\"."
+          "Deployment error encountered during build"
         ]
       },
       "acceptanceCriteria": [
-        "Three device icons (laptop, phone, printer) are displayed on the landing page",
-        "A banner or prominent element shows the text 'Device Fixes Done Right'",
-        "All images are loaded from frontend/public/assets/generated"
-      ]
-    },
-    {
-      "id": "REQ-29",
-      "text": "Add a Portfolio/Work Samples section to the LoginPrompt landing page showcasing 2–3 device fix scenarios. Use the generated portfolio images (printer-setup-before-after.dim_600x400.png, mobile-repair-demo.dim_600x400.png, laptop-fix-demo.dim_600x400.png) served from frontend/public/assets/generated, with short captions describing each scenario (e.g., 'Before/After: Printer Setup', 'Mobile Screen Repair Demo', 'Laptop Upgrade Complete').",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Portfolio Additions: Add 2-3 screenshots of fixed devices (e.g., before/after printer setup, mobile screen repair demo) or short video clips of quick fixes."
-        ]
-      },
-      "acceptanceCriteria": [
-        "A Portfolio or Work Samples section is visible on the landing page",
-        "2–3 image cards are displayed with captions describing each fix scenario",
-        "All images are loaded from frontend/public/assets/generated"
+        "The backend Motoko actor compiles without errors.",
+        "The frontend builds without TypeScript or bundler errors.",
+        "The deployed application loads and all routes are accessible."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under frontend/src/hooks/ (immutable paths)",
-    "Do not modify frontend/src/main.tsx or frontend/src/components/ui (immutable paths)",
-    "All prices must be displayed in INR (₹), not USD or any other currency",
-    "Do not alter existing backend data models or actor logic"
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
+    "Keep all backend logic within the single actor in backend/main.mo.",
+    "Do not introduce new payment gateways or external services."
   ],
   "nonGoals": [
-    "Changes to the ticketing system, chat, or knowledge base functionality",
-    "Changes to the ExpertDashboard or CustomerDashboard internals",
-    "Any backend schema or actor function changes",
-    "Removing or modifying existing authentication flows"
+    "Adding new payment providers or restructuring the payment flow beyond fixing the modal toggle.",
+    "Redesigning the dashboard layout or navigation.",
+    "Adding new ticket fields or changing the ticket data model beyond what is required for these fixes."
   ],
   "imageRequirements": {
-    "required": [
-      "Wide banner with bold text 'Device Fixes Done Right' on a clean white/light-grey background with subtle tech iconography silhouettes (device-fixes-banner.dim_1200x400.png)",
-      "Flat vector illustration of a laptop computer, front-facing, minimal line-art style on transparent background (laptop-icon.dim_64x64.png)",
-      "Flat vector illustration of a smartphone, front-facing, minimal line-art style on transparent background (phone-icon.dim_64x64.png)",
-      "Flat vector illustration of a desktop inkjet printer, front-facing, minimal line-art style on transparent background (printer-icon.dim_64x64.png)",
-      "Side-by-side before/after illustration of a printer setup: left panel showing tangled cables and offline status, right panel showing neat cables and green connected status (printer-setup-before-after.dim_600x400.png)",
-      "Illustration of a technician holding a smartphone showing a cracked screen on the left and a repaired screen on the right (mobile-repair-demo.dim_600x400.png)",
-      "Illustration of a laptop on a desk showing a performance boost graphic with a speedometer going from slow to fast (laptop-fix-demo.dim_600x400.png)"
-    ],
+    "required": [],
     "edits": []
   }
 }

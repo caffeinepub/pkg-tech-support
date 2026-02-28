@@ -197,6 +197,8 @@ export interface backendInterface {
     getCallerUserRole(): Promise<UserRole>;
     getChatFeedback(sessionId: bigint): Promise<ChatFeedback | null>;
     getChatMessages(ticketId: bigint): Promise<Array<ChatMessage>>;
+    getCustomerHistory(): Promise<Array<SupportTicket>>;
+    getExpertHistory(): Promise<Array<SupportTicket>>;
     getKBArticle(articleId: bigint): Promise<KBArticle | null>;
     getLoginEvents(): Promise<Array<LoginEvent>>;
     getLoginEventsCSV(): Promise<string>;

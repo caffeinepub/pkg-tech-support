@@ -1,96 +1,113 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-28T17:01:43.761Z",
+  "generatedAt": "2026-02-28T18:48:55.574Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 6,
-    "implemented": 6,
+    "total": 5,
+    "implemented": 5,
     "items": [
       {
-        "id": "REQ-24",
-        "summary": "Update the LoginPrompt (hero/landing) component headline and description to reflect everyday device support: set the headline to 'Tech Support Expert | Fast Fixes for Laptops, Desktops, Mobiles & Printers | 10+ Years Experience' and replace any existing long description with the short copy: 'Jaipur-based pro fixing your laptops, desktops, mobiles, and printers remotely or on-site. Quick, affordable solutions for home/office. Message for same-day help!'",
+        "id": "REQ-1",
+        "summary": "Remove the payment option (payment field, payment toggle, or any payment-related UI element) from the ticket creation form in the CustomerDashboard so customers cannot set payment details when creating a new ticket.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/LoginPrompt.tsx"
+          "frontend/src/components/TicketCreationForm.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/LoginPrompt.tsx"
+          "frontend/src/components/TicketCreationForm.tsx"
         ]
       },
       {
-        "id": "REQ-25",
-        "summary": "Add a Skills/Services section to the LoginPrompt landing page listing four bullet-point skills: 'Laptop/Desktop troubleshooting & upgrades', 'Mobile repair/setup (Android/iOS)', 'Printer connectivity & ink issues', 'Remote support via chat/video'.",
+        "id": "REQ-2",
+        "summary": "Fix the expert/technician's payment request toggle in the ChatSection so that toggling the payment button opens the payment request popup/modal correctly. The modal must appear when the expert activates the payment toggle.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/LoginPrompt.tsx"
+          "frontend/src/components/ChatSection.tsx",
+          "frontend/src/components/PaymentRequestModal.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/LoginPrompt.tsx"
+          "frontend/src/components/ChatSection.tsx",
+          "frontend/src/components/PaymentRequestModal.tsx"
         ]
       },
       {
-        "id": "REQ-26",
-        "summary": "Add a Pricing/Services section to the LoginPrompt landing page displaying three clear service tiers in INR: 'Basic Diagnostic: ₹500', 'Full Laptop/Mobile Fix: ₹1,500', 'Printer Setup: ₹800'. Each tier should emphasize a 24–48 hour turnaround promise.",
+        "id": "REQ-3",
+        "summary": "Fix the Service History / history tab on the CustomerDashboard (ClientPortal) so that resolved tickets and past interactions are correctly fetched from the backend and displayed. The history list must not be empty when resolved tickets exist.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/LoginPrompt.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/ServiceHistoryTimeline.tsx",
+          "frontend/src/components/ClientPortal.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/LoginPrompt.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/ServiceHistoryTimeline.tsx",
+          "frontend/src/components/ClientPortal.tsx"
         ]
       },
       {
-        "id": "REQ-27",
-        "summary": "Add a Testimonials section to the LoginPrompt landing page with at least three short client quotes: 'Fixed my printer in 30 mins!', 'Laptop running smooth again', and one additional quote about mobile repair. Display each as a styled testimonial card with attribution.",
+        "id": "REQ-4",
+        "summary": "Fix the history/ticket history section on the ExpertDashboard so that past and resolved tickets handled by the expert are correctly fetched and displayed. The list must not be empty when historical ticket data exists.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/LoginPrompt.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/ExpertDashboard.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/LoginPrompt.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/ExpertDashboard.tsx"
         ]
       },
       {
-        "id": "REQ-28",
-        "summary": "Add a visuals/icons strip to the LoginPrompt landing page with clean device icons for laptop, mobile phone, and printer, rendered inline to visually reinforce the service categories. Add a banner or hero tagline element reading 'Device Fixes Done Right' using the generated banner image (device-fixes-banner.dim_1200x400.png) and device icons (laptop-icon.dim_64x64.png, phone-icon.dim_64x64.png, printer-icon.dim_64x64.png) served from frontend/public/assets/generated.",
+        "id": "REQ-5",
+        "summary": "Resolve the deployment error that caused the previous build to fail. Audit the backend Motoko actor (backend/main.mo) and frontend entry files for any compilation or runtime errors, fix type mismatches, missing imports, or malformed function signatures, and ensure the project builds and deploys successfully.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/LoginPrompt.tsx"
+          "frontend/src/App.tsx",
+          "frontend/src/components/CustomerDashboard.tsx",
+          "frontend/src/components/ExpertDashboard.tsx",
+          "frontend/src/components/ChatSection.tsx",
+          "frontend/src/hooks/usePaymentToggle.ts",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useTickets.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/LoginPrompt.tsx"
-        ]
-      },
-      {
-        "id": "REQ-29",
-        "summary": "Add a Portfolio/Work Samples section to the LoginPrompt landing page showcasing 2–3 device fix scenarios. Use the generated portfolio images (printer-setup-before-after.dim_600x400.png, mobile-repair-demo.dim_600x400.png, laptop-fix-demo.dim_600x400.png) served from frontend/public/assets/generated, with short captions describing each scenario (e.g., 'Before/After: Printer Setup', 'Mobile Screen Repair Demo', 'Laptop Upgrade Complete').",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/LoginPrompt.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/LoginPrompt.tsx"
+          "frontend/src/components/CustomerDashboard.tsx",
+          "frontend/src/components/ExpertDashboard.tsx",
+          "frontend/src/components/ChatSection.tsx",
+          "frontend/src/hooks/usePaymentToggle.ts",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useTickets.ts"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/assets/generated/device-fixes-banner.dim_1200x400.png",
-    "frontend/public/assets/generated/laptop-fix-demo.dim_600x400.png",
-    "frontend/public/assets/generated/laptop-icon.dim_64x64.png",
-    "frontend/public/assets/generated/mobile-repair-demo.dim_600x400.png",
-    "frontend/public/assets/generated/phone-icon.dim_64x64.png",
-    "frontend/public/assets/generated/printer-icon.dim_64x64.png",
-    "frontend/public/assets/generated/printer-setup-before-after.dim_600x400.png",
-    "frontend/src/components/LoginPrompt.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/AdminLoginTracking.tsx",
+    "frontend/src/components/ChatSection.tsx",
+    "frontend/src/components/ClientPortal.tsx",
+    "frontend/src/components/CustomerDashboard.tsx",
+    "frontend/src/components/ExpertDashboard.tsx",
+    "frontend/src/components/PaymentRequestModal.tsx",
+    "frontend/src/components/ServiceHistoryTimeline.tsx",
+    "frontend/src/components/TicketCreationForm.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/usePaymentToggle.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useTickets.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

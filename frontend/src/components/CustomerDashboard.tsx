@@ -1,130 +1,112 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageCircle, LayoutDashboard, BookOpen, CreditCard } from 'lucide-react';
+import {
+  MessageSquare,
+  LayoutDashboard,
+  BookOpen,
+  CreditCard,
+} from 'lucide-react';
 import ChatSection from './ChatSection';
 import ClientPortal from './ClientPortal';
 import KnowledgeBaseView from './KnowledgeBaseView';
 import PaymentSection from './PaymentSection';
 import PaymentRequestModal from './PaymentRequestModal';
-import { useGetUserTickets } from '../hooks/useQueries';
+import { useGetUserTickets } from '../hooks/useTickets';
 import { useGetToggleState } from '../hooks/usePaymentToggle';
-import { useGetCallerUserProfile } from '../hooks/useQueries';
 import { TicketStatusOld } from '../backend';
 
-/**
- * Inner component that polls the payment toggle state for a specific ticket.
- * Renders the PaymentRequestModal when the technician has enabled payment for that ticket.
- */
-function PaymentModalController() {
-  const { data: userProfile } = useGetCallerUserProfile();
-  const { data: tickets = [] } = useGetUserTickets();
-  const [dismissedTickets, setDismissedTickets] = useState<Set<string>>(new Set());
+// Polls the active ticket's payment toggle and shows modal when enabled
+const PaymentModalController: React.FC = () => {
+  const { data: tickets } = useGetUserTickets();
+  const [modalShown, setModalShown] = useState(false);
 
-  // Find the first active (non-resolved) ticket for this customer
-  const activeTicket = tickets.find(
-    (t) =>
-      !userProfile?.isTechnician &&
-      (t.status === TicketStatusOld.open || t.status === TicketStatusOld.inProgress)
-  );
+  // Find the most recent open/inProgress ticket
+  const activeTicket = tickets
+    ? [...tickets]
+        .filter(
+          (t) =>
+            t.status === TicketStatusOld.open ||
+            t.status === TicketStatusOld.inProgress
+        )
+        .sort((a, b) => Number(b.createdAt) - Number(a.createdAt))[0]
+    : null;
 
-  const activeTicketId = activeTicket?.ticketId ?? null;
+  const ticketId = activeTicket?.ticketId ?? null;
 
-  // Poll the toggle state for the active ticket
-  const { data: toggleState } = useGetToggleState(activeTicketId);
+  const { data: toggleState } = useGetToggleState(ticketId ?? null);
 
-  const paymentRequested = toggleState?.paymentRequested === true && toggleState?.toggleEnabled === true;
-  const ticketKey = activeTicketId?.toString() ?? '';
-  const isDismissed = dismissedTickets.has(ticketKey);
-
-  const showModal = paymentRequested && !isDismissed && !!activeTicketId && !userProfile?.isTechnician;
+  // Show modal when technician enables payment toggle
+  useEffect(() => {
+    if (toggleState?.toggleEnabled && !modalShown) {
+      setModalShown(true);
+    }
+    if (!toggleState?.toggleEnabled) {
+      setModalShown(false);
+    }
+  }, [toggleState?.toggleEnabled]);
 
   const handleClose = () => {
-    if (ticketKey) {
-      setDismissedTickets((prev) => new Set(prev).add(ticketKey));
-    }
+    setModalShown(false);
   };
-
-  // Re-show modal if technician re-enables payment after customer dismissed
-  useEffect(() => {
-    if (!paymentRequested && ticketKey) {
-      setDismissedTickets((prev) => {
-        const next = new Set(prev);
-        next.delete(ticketKey);
-        return next;
-      });
-    }
-  }, [paymentRequested, ticketKey]);
 
   return (
     <PaymentRequestModal
-      ticketId={activeTicketId}
-      isOpen={showModal}
+      isOpen={modalShown}
       onClose={handleClose}
+      ticketId={ticketId}
+      amount={299}
     />
   );
-}
+};
 
-export default function CustomerDashboard() {
+const CustomerDashboard: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('portal');
+
   return (
-    <div className="min-h-screen" style={{ background: 'var(--background)' }}>
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <Tabs defaultValue="chat" className="w-full">
-          <TabsList className="w-full mb-6 p-1 rounded-2xl gap-1 h-auto flex"
-            style={{ background: 'var(--muted)' }}>
-            <TabsTrigger
-              value="chat"
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-200
-                data-[state=active]:shadow-md data-[state=active]:font-semibold"
-              style={{
-                '--tw-data-active-bg': 'var(--tab-selected-bg)',
-              } as React.CSSProperties}
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>Live Chat</span>
+    <div className="flex flex-col h-full">
+      {/* Payment modal controller — always mounted */}
+      <PaymentModalController />
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <div className="border-b border-border bg-card/50 px-2 pt-2">
+          <TabsList className="grid grid-cols-4 bg-muted/50 w-full">
+            <TabsTrigger value="portal" className="gap-1 text-xs">
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Portal</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="portal"
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-200
-                data-[state=active]:shadow-md data-[state=active]:font-semibold"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              <span>My Portal</span>
+            <TabsTrigger value="chat" className="gap-1 text-xs">
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Chat</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="kb"
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-200
-                data-[state=active]:shadow-md data-[state=active]:font-semibold"
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>Knowledge Base</span>
+            <TabsTrigger value="kb" className="gap-1 text-xs">
+              <BookOpen className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Knowledge Base</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="payment"
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-200
-                data-[state=active]:shadow-md data-[state=active]:font-semibold"
-            >
-              <CreditCard className="w-4 h-4" />
-              <span>Payment</span>
+            <TabsTrigger value="payment" className="gap-1 text-xs">
+              <CreditCard className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Payment</span>
             </TabsTrigger>
           </TabsList>
+        </div>
 
-          <TabsContent value="chat" className="animate-fade-in">
-            <ChatSection />
-          </TabsContent>
-          <TabsContent value="portal" className="animate-fade-in">
-            <ClientPortal />
-          </TabsContent>
-          <TabsContent value="kb" className="animate-fade-in">
-            <KnowledgeBaseView />
-          </TabsContent>
-          <TabsContent value="payment" className="animate-fade-in">
-            <PaymentSection />
-          </TabsContent>
-        </Tabs>
-      </div>
+        <TabsContent value="portal" className="flex-1 overflow-hidden mt-0">
+          <ClientPortal />
+        </TabsContent>
 
-      {/* Payment modal controller — always mounted so it can poll and show modal regardless of active tab */}
-      <PaymentModalController />
+        <TabsContent value="chat" className="flex-1 overflow-hidden mt-0">
+          <ChatSection />
+        </TabsContent>
+
+        <TabsContent value="kb" className="flex-1 overflow-y-auto mt-0 p-4">
+          <KnowledgeBaseView />
+        </TabsContent>
+
+        <TabsContent value="payment" className="flex-1 overflow-y-auto mt-0 p-4">
+          <PaymentSection />
+        </TabsContent>
+      </Tabs>
     </div>
   );
-}
+};
+
+export default CustomerDashboard;

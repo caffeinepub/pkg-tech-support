@@ -198,6 +198,8 @@ export interface _SERVICE {
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getChatFeedback' : ActorMethod<[bigint], [] | [ChatFeedback]>,
   'getChatMessages' : ActorMethod<[bigint], Array<ChatMessage>>,
+  'getCustomerHistory' : ActorMethod<[], Array<SupportTicket>>,
+  'getExpertHistory' : ActorMethod<[], Array<SupportTicket>>,
   'getKBArticle' : ActorMethod<[bigint], [] | [KBArticle]>,
   'getLoginEvents' : ActorMethod<[], Array<LoginEvent>>,
   'getLoginEventsCSV' : ActorMethod<[], string>,

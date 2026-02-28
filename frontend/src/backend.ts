@@ -289,6 +289,8 @@ export interface backendInterface {
     getCallerUserRole(): Promise<UserRole>;
     getChatFeedback(sessionId: bigint): Promise<ChatFeedback | null>;
     getChatMessages(ticketId: bigint): Promise<Array<ChatMessage>>;
+    getCustomerHistory(): Promise<Array<SupportTicket>>;
+    getExpertHistory(): Promise<Array<SupportTicket>>;
     getKBArticle(articleId: bigint): Promise<KBArticle | null>;
     getLoginEvents(): Promise<Array<LoginEvent>>;
     getLoginEventsCSV(): Promise<string>;
@@ -726,6 +728,34 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getChatMessages(arg0);
             return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getCustomerHistory(): Promise<Array<SupportTicket>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCustomerHistory();
+                return from_candid_vec_n22(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCustomerHistory();
+            return from_candid_vec_n22(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getExpertHistory(): Promise<Array<SupportTicket>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getExpertHistory();
+                return from_candid_vec_n22(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getExpertHistory();
+            return from_candid_vec_n22(this._uploadFile, this._downloadFile, result);
         }
     }
     async getKBArticle(arg0: bigint): Promise<KBArticle | null> {

@@ -1,140 +1,96 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Ticket, AlertCircle, CheckCircle } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { AlertCircle, Loader2, Ticket } from 'lucide-react';
 import { useGetAllAvailableTechnicians } from '../hooks/useQueries';
-import { useActor } from '../hooks/useActor';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { SupportTicket } from '../backend';
+import { useCreateSupportTicket } from '../hooks/useTickets';
+import { Principal } from '@icp-sdk/core/principal';
 
 interface TicketCreationFormProps {
-  onSuccess?: (ticket: SupportTicket) => void;
+  onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export default function TicketCreationForm({ onSuccess, onCancel }: TicketCreationFormProps) {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-  const { data: technicians, isLoading: techLoading } = useGetAllAvailableTechnicians();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState('Medium');
-  const [selectedTechnician, setSelectedTechnician] = useState('');
-  const [error, setError] = useState('');
+const TicketCreationForm: React.FC<TicketCreationFormProps> = ({ onSuccess, onCancel }) => {
+  const [selectedTechnician, setSelectedTechnician] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
-  const availableTechs = (technicians || []).filter((t) => t.isAvailable);
+  const { data: technicians, isLoading: loadingTechs } = useGetAllAvailableTechnicians();
+  const createTicket = useCreateSupportTicket();
 
-  const createTicketMutation = useMutation({
-    mutationFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      if (!selectedTechnician) throw new Error('Please select a technician');
-      const { Principal } = await import('@icp-sdk/core/principal');
-      const techPrincipal = Principal.fromText(selectedTechnician);
-      return actor.createSupportTicket(techPrincipal);
-    },
-    onSuccess: (ticket) => {
-      queryClient.invalidateQueries({ queryKey: ['userTickets'] });
-      queryClient.refetchQueries({ queryKey: ['userTickets'] });
-      onSuccess?.(ticket);
-    },
-    onError: (err: Error) => {
-      // Surface the backend error message directly
-      const msg = err.message || 'Failed to create ticket. Please try again.';
-      setError(msg);
-    },
-  });
+  const availableTechs = (technicians ?? []).filter((t) => t.isAvailable);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError(null);
 
-    if (!title.trim()) {
-      setError('Title is required');
-      return;
-    }
-    if (!description.trim()) {
-      setError('Description is required');
-      return;
-    }
     if (!selectedTechnician) {
-      setError('Please select an available technician');
+      setError('Please select a technician');
       return;
     }
 
-    createTicketMutation.mutate();
+    try {
+      const techPrincipal = Principal.fromText(selectedTechnician);
+      await createTicket.mutateAsync(techPrincipal);
+      onSuccess?.();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('Payment must be completed')) {
+        setError(
+          'Please complete payment before creating a support ticket. Use the Payment tab to pay first.'
+        );
+      } else if (msg.includes('Rate limit')) {
+        setError('Please wait a few minutes before creating another ticket.');
+      } else if (msg.includes('not currently available')) {
+        setError('The selected technician is not currently available. Please choose another.');
+      } else {
+        setError(msg || 'Failed to create ticket. Please try again.');
+      }
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Free ticket notice */}
-      <div
-        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
-        style={{ background: 'oklch(0.95 0.05 160)', color: 'oklch(0.35 0.12 160)' }}
-      >
-        <CheckCircle className="w-4 h-4 flex-shrink-0" />
-        <span>Creating a support ticket is <strong>free</strong>. No payment required.</span>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Notice */}
+      <div className="flex items-start gap-3 p-3 rounded-lg bg-success/10 border border-success/20">
+        <Ticket className="h-5 w-5 text-success shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-medium text-success">Support Ticket</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Connect with a technician for expert help. Payment is handled separately via the Payment
+            tab.
+          </p>
+        </div>
       </div>
 
+      {/* Technician Selection */}
       <div className="space-y-2">
-        <Label htmlFor="ticket-title">Title</Label>
-        <Input
-          id="ticket-title"
-          placeholder="Brief description of the issue"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          maxLength={200}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="ticket-desc">Description</Label>
-        <Textarea
-          id="ticket-desc"
-          placeholder="Detailed description of the problem..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={4}
-          maxLength={2000}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Priority</Label>
-        <Select value={priority} onValueChange={setPriority}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Low">Low</SelectItem>
-            <SelectItem value="Medium">Medium</SelectItem>
-            <SelectItem value="High">High</SelectItem>
-            <SelectItem value="Critical">Critical</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Assign Technician</Label>
-        {techLoading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+        <Label htmlFor="technician" className="text-foreground font-medium">
+          Select Technician
+        </Label>
+        {loadingTechs ? (
+          <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading available technicians...
           </div>
         ) : availableTechs.length === 0 ? (
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2">
-            <AlertCircle className="h-4 w-4 text-warning flex-shrink-0" />
-            <p className="text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
+            <AlertCircle className="h-4 w-4 text-warning shrink-0" />
+            <p className="text-sm text-warning">
               No technicians are currently available. Please try again later.
             </p>
           </div>
         ) : (
           <Select value={selectedTechnician} onValueChange={setSelectedTechnician}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a technician" />
+            <SelectTrigger className="bg-background border-border">
+              <SelectValue placeholder="Choose an available technician" />
             </SelectTrigger>
             <SelectContent>
               {availableTechs.map((tech) => (
@@ -142,7 +98,7 @@ export default function TicketCreationForm({ onSuccess, onCancel }: TicketCreati
                   key={tech.technician.toString()}
                   value={tech.technician.toString()}
                 >
-                  Technician {tech.technician.toString().slice(0, 16)}…
+                  Technician {tech.technician.toString().slice(0, 12)}…
                 </SelectItem>
               ))}
             </SelectContent>
@@ -150,35 +106,44 @@ export default function TicketCreationForm({ onSuccess, onCancel }: TicketCreati
         )}
       </div>
 
+      {/* Error */}
       {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+          <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+          <p className="text-sm text-destructive">{error}</p>
+        </div>
       )}
 
-      <div className="flex gap-2 justify-end pt-1">
+      {/* Actions */}
+      <div className="flex gap-3 pt-1">
         {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel} disabled={createTicketMutation.isPending}>
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            onClick={onCancel}
+            disabled={createTicket.isPending}
+          >
             Cancel
           </Button>
         )}
         <Button
           type="submit"
-          disabled={createTicketMutation.isPending || availableTechs.length === 0}
-          style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+          className="flex-1 btn-primary"
+          disabled={createTicket.isPending || availableTechs.length === 0}
         >
-          {createTicketMutation.isPending ? (
+          {createTicket.isPending ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating...
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Creating…
             </>
           ) : (
-            <>
-              <Ticket className="w-4 h-4 mr-2" /> Create Ticket (Free)
-            </>
+            'Create Ticket'
           )}
         </Button>
       </div>
     </form>
   );
-}
+};
+
+export default TicketCreationForm;

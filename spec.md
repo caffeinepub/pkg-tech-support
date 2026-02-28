@@ -1,14 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Update the LoginPrompt (landing page) of Caffeine Tech Support to reflect an everyday device support focus with refreshed copy, skills, pricing, testimonials, visuals, and portfolio sections.
+**Goal:** Fix history display on customer and expert dashboards, remove payment option from ticket creation form, fix the expert payment request modal toggle, and resolve deployment build errors.
 
 **Planned changes:**
-- Update the hero headline to "Tech Support Expert | Fast Fixes for Laptops, Desktops, Mobiles & Printers | 10+ Years Experience" and replace the existing description with the short Jaipur-based pro copy
-- Add a Skills/Services section listing four bullet points: Laptop/Desktop troubleshooting & upgrades, Mobile repair/setup (Android/iOS), Printer connectivity & ink issues, Remote support via chat/video
-- Add a Pricing section with three INR tiers (Basic Diagnostic ₹500, Full Laptop/Mobile Fix ₹1,500, Printer Setup ₹800), each noting a 24–48 hour turnaround
-- Add a Testimonials section with at least three styled testimonial cards including the specified quotes and placeholder attributions
-- Add a device icons strip (laptop, phone, printer) and a "Device Fixes Done Right" banner using generated images from frontend/public/assets/generated
-- Add a Portfolio/Work Samples section with three image cards (printer setup before/after, mobile repair demo, laptop fix demo) with short captions, images loaded from frontend/public/assets/generated
+- Remove all payment-related fields and toggles from the ticket creation form in the CustomerDashboard so tickets can be created without any payment input.
+- Fix the expert/technician payment request toggle in the ChatSection so that activating it correctly opens the payment request modal, and closing it resets the toggle state.
+- Fix the Service History tab on the CustomerDashboard to correctly fetch and display resolved tickets for the logged-in customer, with proper loading and empty states.
+- Fix the history section on the ExpertDashboard to correctly fetch and display resolved/closed tickets assigned to the logged-in technician, with proper loading and empty states.
+- Audit and fix any backend Motoko compilation errors, frontend TypeScript/bundler errors, type mismatches, or missing imports causing deployment failures.
 
-**User-visible outcome:** Visitors to the landing page see an updated expert profile focused on device support, with clear pricing, skills, testimonials, device icons, a banner, and a portfolio of fix scenarios.
+**User-visible outcome:** Customers can create tickets without seeing payment options, experts can successfully open the payment request popup via the toggle, both customers and experts can view their ticket history, and the application builds and deploys without errors.

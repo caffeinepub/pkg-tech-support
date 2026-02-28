@@ -1,101 +1,134 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Update Expert Profile & Landing Page for Everyday Device Support Focus",
+  "title": "Fix history display on customer/expert pages and remove payment option from ticket creation",
   "requirements": [
     {
-      "id": "REQ-24",
-      "summary": "Update LoginPrompt hero headline and description to reflect everyday device support (laptops, desktops, mobiles, printers) with Jaipur-based expert positioning",
+      "id": "REQ-1",
+      "summary": "Remove the payment option (payment field, payment toggle, or any payment-related UI element) from the ticket creation form in the CustomerDashboard so customers cannot set payment details when creating a new ticket.",
       "acceptanceCriteria": [
-        "The hero/landing page displays the exact headline: 'Tech Support Expert | Fast Fixes for Laptops, Desktops, Mobiles & Printers | 10+ Years Experience'",
-        "The description on the landing page is 3–4 lines and matches the specified copy exactly",
-        "No references to AWS, cloud, or old headline text remain on the landing page"
+        "The TicketCreationForm component does not render any payment-related fields or toggles.",
+        "A new ticket can be created without any payment input.",
+        "No payment data is submitted as part of ticket creation."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/LoginPrompt.tsx",
+          "path": "frontend/src/components/TicketCreationForm.tsx",
           "operation": "modify",
-          "description": "Replace the existing headline with 'Tech Support Expert | Fast Fixes for Laptops, Desktops, Mobiles & Printers | 10+ Years Experience' and update the description to the exact copy: 'Jaipur-based pro fixing your laptops, desktops, mobiles, and printers remotely or on-site. Quick, affordable solutions for home/office. Message for same-day help!' Remove any AWS or cloud-related messaging from the component."
+          "description": "Remove all payment-related UI elements (fields, toggles, inputs) from the ticket creation form. Ensure the form only collects technician selection, title, description, and priority. Verify that no payment data is included in the createSupportTicket mutation payload."
         }
       ]
     },
     {
-      "id": "REQ-25",
-      "summary": "Add a Skills/Services section to the LoginPrompt with four bullet-point skills covering device troubleshooting, mobile repair, printer support, and remote assistance",
+      "id": "REQ-2",
+      "summary": "Fix the expert/technician's payment request toggle in the ChatSection so that toggling the payment button opens the payment request popup/modal correctly. The modal must appear when the expert activates the payment toggle.",
       "acceptanceCriteria": [
-        "A clearly labeled 'Skills' or 'Services' section appears on the landing page",
-        "All four bullet items are displayed exactly as specified",
-        "No cloud/AWS-related skills appear in this section"
+        "When the expert clicks the payment toggle in ChatSection, the PaymentRequestModal (or equivalent payment popup) opens.",
+        "The modal displays the correct payment details for the active ticket.",
+        "Closing or dismissing the modal resets the toggle state appropriately."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/LoginPrompt.tsx",
+          "path": "frontend/src/components/ChatSection.tsx",
           "operation": "modify",
-          "description": "Add a new 'Skills' or 'Services' section below the hero description displaying exactly four bullet points: 'Laptop/Desktop troubleshooting & upgrades', 'Mobile repair/setup (Android/iOS)', 'Printer connectivity & ink issues', 'Remote support via chat/video'. Use consistent styling with the rest of the component and ensure the section is visually distinct."
+          "description": "Fix the payment toggle event handler to correctly open the PaymentRequestModal when the expert activates the toggle. Ensure the modal receives the current ticket ID and payment state. Add proper state management to track modal open/close and reset toggle state when the modal is dismissed without completing payment. Verify the toggle->modal flow using the usePaymentToggle hook."
+        },
+        {
+          "path": "frontend/src/components/PaymentRequestModal.tsx",
+          "operation": "modify",
+          "description": "Ensure the modal properly receives and displays payment details for the active ticket. Add onClose callback support to notify the parent component when the modal is dismissed, allowing proper toggle state reset. Verify the modal shows correct ticket and payment information when opened from ChatSection."
         }
       ]
     },
     {
-      "id": "REQ-26",
-      "summary": "Add a Pricing/Services section to LoginPrompt displaying three service tiers in INR with 24–48 hour turnaround promise",
+      "id": "REQ-3",
+      "summary": "Fix the Service History / history tab on the CustomerDashboard (ClientPortal) so that resolved tickets and past interactions are correctly fetched from the backend and displayed. The history list must not be empty when resolved tickets exist.",
       "acceptanceCriteria": [
-        "A Pricing or Services section is visible on the landing page with exactly three tiers",
-        "All prices are displayed in INR (₹) with the specified amounts",
-        "Each tier card/row includes a '24–48 hour turnaround' note"
+        "The 'Service History' or history tab in the CustomerDashboard renders all resolved tickets associated with the logged-in customer.",
+        "The ServiceHistoryTimeline component receives and displays non-empty data when resolved tickets exist in the backend.",
+        "Loading and empty states are handled gracefully with appropriate messages."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/LoginPrompt.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a new 'Pricing' or 'Services' section with three clearly defined service tiers: 'Basic Diagnostic: ₹500', 'Full Laptop/Mobile Fix: ₹1,500', 'Printer Setup: ₹800'. Each tier must display the price in INR (₹) and include a '24–48 hour turnaround' note. Use card or column layout for visual clarity and ensure consistent spacing with other sections."
+          "description": "Add a new React Query hook useGetCustomerHistory that calls actor.getCustomerHistory() to fetch resolved tickets for the current customer. Enable the query only when the actor is available and the user is authenticated. Set appropriate staleTime and refetchInterval for real-time updates. Return loading, error, and data states."
+        },
+        {
+          "path": "frontend/src/components/ServiceHistoryTimeline.tsx",
+          "operation": "modify",
+          "description": "Update the component to use the new useGetCustomerHistory hook instead of relying on props or other data sources. Filter the returned tickets to show only resolved ones (status === 'resolved'). Handle loading state with a skeleton or spinner. Display an appropriate empty state message when no resolved tickets exist. Ensure tickets are sorted by updatedAt timestamp (most recent first) and render feedback ratings and comments correctly."
+        },
+        {
+          "path": "frontend/src/components/ClientPortal.tsx",
+          "operation": "modify",
+          "description": "Ensure the Service History tab correctly renders the ServiceHistoryTimeline component without passing stale or incorrect props. Verify the tab switch logic and ensure the history data is fetched when the tab becomes active. Add error boundary handling for the history section."
         }
       ]
     },
     {
-      "id": "REQ-27",
-      "summary": "Add a Testimonials section to LoginPrompt with at least three short client quotes displayed as styled testimonial cards",
+      "id": "REQ-4",
+      "summary": "Fix the history/ticket history section on the ExpertDashboard so that past and resolved tickets handled by the expert are correctly fetched and displayed. The list must not be empty when historical ticket data exists.",
       "acceptanceCriteria": [
-        "A Testimonials section appears on the landing page with at least 3 testimonial cards",
-        "The two specified quotes are present verbatim",
-        "Each card includes a quote and a placeholder customer name/attribution"
+        "The ExpertDashboard's ticket history section renders resolved or closed tickets assigned to the logged-in technician.",
+        "The correct backend query is called (e.g., filtering by technician principal or resolved status) and results are passed to the UI.",
+        "Loading and empty states are handled gracefully."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/LoginPrompt.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a 'Testimonials' section containing at least three testimonial cards. Include these exact quotes: 'Fixed my printer in 30 mins!', 'Laptop running smooth again', and one additional quote about mobile repair (e.g., 'Phone screen replaced same day!'). Each card must display the quote text and a placeholder customer name/attribution. Style the cards consistently with the rest of the component using shadow, padding, and proper typography."
+          "description": "Add a new React Query hook useGetExpertHistory that calls actor.getExpertHistory() to fetch resolved tickets assigned to the current technician. Enable the query only when the actor is available, the user is authenticated, and the user profile indicates isTechnician is true. Set appropriate staleTime and refetchInterval. Return loading, error, and data states."
+        },
+        {
+          "path": "frontend/src/components/ExpertDashboard.tsx",
+          "operation": "modify",
+          "description": "Add a ticket history section or tab that uses the new useGetExpertHistory hook to fetch and display resolved tickets for the logged-in technician. Render the ticket list with appropriate metadata (ticket ID, customer, resolved date, status). Handle loading state with a skeleton or spinner and display an empty state message when no historical tickets exist. Ensure tickets are sorted by updatedAt (most recent first). Wire the history section into the existing tab navigation if not already present."
         }
       ]
     },
     {
-      "id": "REQ-28",
-      "summary": "Add banner and device icons strip to LoginPrompt using generated images (device-fixes-banner, laptop-icon, phone-icon, printer-icon) from frontend/public/assets/generated",
+      "id": "REQ-5",
+      "summary": "Resolve the deployment error that caused the previous build to fail. Audit the frontend entry files for any compilation or runtime errors, fix type mismatches, missing imports, or malformed function signatures, and ensure the project builds successfully.",
       "acceptanceCriteria": [
-        "Three device icons (laptop, phone, printer) are displayed on the landing page",
-        "A banner or prominent element shows the text 'Device Fixes Done Right'",
-        "All images are loaded from frontend/public/assets/generated"
+        "The frontend builds without TypeScript or bundler errors.",
+        "The deployed application loads and all routes are accessible."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/LoginPrompt.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Add a banner element displaying the generated image frontend/public/assets/generated/device-fixes-banner.dim_1200x400.png with the tagline 'Device Fixes Done Right'. Below the banner, add an inline icons strip rendering the three device icons: frontend/public/assets/generated/laptop-icon.dim_64x64.png, frontend/public/assets/generated/phone-icon.dim_64x64.png, and frontend/public/assets/generated/printer-icon.dim_64x64.png. Ensure images are loaded from the exact workspace paths and rendered with appropriate sizing and spacing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-29",
-      "summary": "Add a Portfolio/Work Samples section to LoginPrompt showcasing 2–3 device fix scenarios using generated portfolio images from frontend/public/assets/generated",
-      "acceptanceCriteria": [
-        "A Portfolio or Work Samples section is visible on the landing page",
-        "2–3 image cards are displayed with captions describing each fix scenario",
-        "All images are loaded from frontend/public/assets/generated"
-      ],
-      "file_operations": [
+          "description": "Audit the App.tsx file for any TypeScript errors, missing imports, or route configuration issues. Verify all route components are correctly imported and typed. Check for any undefined references or type mismatches in the router setup. Ensure QueryClientProvider, ThemeProvider, and InternetIdentityProvider are correctly configured and wrapped."
+        },
         {
-          "path": "frontend/src/components/LoginPrompt.tsx",
+          "path": "frontend/src/components/CustomerDashboard.tsx",
           "operation": "modify",
-          "description": "Add a 'Portfolio' or 'Work Samples' section displaying 2–3 image cards with the generated portfolio images: frontend/public/assets/generated/printer-setup-before-after.dim_600x400.png (caption: 'Before/After: Printer Setup'), frontend/public/assets/generated/mobile-repair-demo.dim_600x400.png (caption: 'Mobile Screen Repair Demo'), and frontend/public/assets/generated/laptop-fix-demo.dim_600x400.png (caption: 'Laptop Upgrade Complete'). Each card must display the image and its corresponding caption. Ensure images are loaded from the exact workspace paths and styled consistently with proper aspect ratios."
+          "description": "Audit for TypeScript compilation errors, missing prop types, incorrect hook usage, or malformed JSX. Verify all child components (ChatSection, ClientPortal, KnowledgeBaseView, PaymentSection, PaymentModalController) are correctly imported and used. Fix any type mismatches in state variables, event handlers, or component props. Ensure the PaymentModalController polling logic does not cause runtime errors."
+        },
+        {
+          "path": "frontend/src/components/ExpertDashboard.tsx",
+          "operation": "modify",
+          "description": "Audit for TypeScript errors, missing imports, or incorrect component usage. Verify all tab sections (ChatSection, TicketListView, AnalyticsDashboard, KnowledgeBaseView, AdminLoginTracking) are correctly imported and rendered. Fix any type mismatches in props or state. Ensure tab navigation logic is correct and does not cause runtime errors."
+        },
+        {
+          "path": "frontend/src/components/ChatSection.tsx",
+          "operation": "modify",
+          "description": "Audit for TypeScript errors, missing imports, type mismatches in hook usage (usePaymentToggle, useTickets, useSendMessage), or incorrect prop types. Verify all event handlers, state updates, and optimistic UI logic are correctly typed. Fix any issues with the payment toggle logic that may cause compilation or runtime errors. Ensure the component does not have any undefined references or malformed JSX."
+        },
+        {
+          "path": "frontend/src/hooks/usePaymentToggle.ts",
+          "operation": "modify",
+          "description": "Audit the usePaymentToggle hooks for TypeScript errors, incorrect return types, or missing actor method calls. Verify the polling configuration (refetchInterval: 5000) does not cause runtime issues. Fix any type mismatches in the mutation payload or query keys. Ensure the hooks correctly handle null actor or unauthenticated states."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Audit all query hooks for TypeScript errors, missing return type annotations, incorrect actor method calls, or type mismatches. Verify enabled conditions, query keys, and queryFn implementations are correct. Fix any issues with aggressive polling that may cause performance or runtime problems. Ensure all hooks handle null actor states gracefully."
+        },
+        {
+          "path": "frontend/src/hooks/useTickets.ts",
+          "operation": "modify",
+          "description": "Audit the ticket-related hooks for TypeScript errors, incorrect return types, or missing actor method calls. Verify query keys, enabled conditions, and mutation logic are correct. Fix any type mismatches or runtime errors in the updateTicketStatus mutation. Ensure polling configurations do not cause performance issues."
         }
       ]
     }

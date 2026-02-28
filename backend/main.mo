@@ -7,14 +7,15 @@ import Iter "mo:core/Iter";
 import Principal "mo:core/Principal";
 import Storage "blob-storage/Storage";
 import Int "mo:core/Int";
+import Migration "migration";
 import Runtime "mo:core/Runtime";
 import AccessControl "authorization/access-control";
 import Stripe "stripe/stripe";
 import OutCall "http-outcalls/outcall";
 import MixinStorage "blob-storage/Mixin";
+import Error "mo:core/Error";
 
-
-
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -113,17 +114,12 @@ actor {
   let checkoutSessions = Map.empty<Text, Principal>();
   let completedPayments = Map.empty<Principal, Bool>();
 
-  // Persistent map to track payment toggle state per ticket/session
   let paymentToggleState = Map.empty<Nat, PaymentToggleState>();
-
-  // Maps a messageId to the ticketId it belongs to
   let messageTicketIndex = Map.empty<Nat, Nat>();
-
   let lastMessageTime = Map.empty<Principal, Int>();
   let lastTicketTime = Map.empty<Principal, Int>();
 
   var configuration : ?Stripe.StripeConfiguration = null;
-
   let supportItem : Stripe.ShoppingItem = {
     currency = "USD";
     productName = "Technical Support";
@@ -134,7 +130,7 @@ actor {
 
   public shared ({ caller }) func initializeAccessControl() : async () {
     AccessControl.initialize(accessControlState, caller);
-    _recordLoginEventInternal(caller, "Admin", "admin@pkgtech.support");
+    recordLoginEvent(caller, "Admin", "admin@pkgtech.support");
   };
 
   public query ({ caller }) func getCallerUserRole() : async AccessControl.UserRole {
@@ -142,7 +138,6 @@ actor {
   };
 
   public shared ({ caller }) func assignCallerUserRole(user : Principal, role : AccessControl.UserRole) : async () {
-    // Admin-only check happens inside AccessControl.assignRole
     AccessControl.assignRole(accessControlState, caller, user, role);
   };
 
@@ -175,11 +170,11 @@ actor {
     userProfiles.add(caller, profile);
 
     let role = if (profile.isTechnician) { "Technician" } else { "Customer" };
-    _recordLoginEventInternal(caller, role, "user@pkgtech.support");
+    recordLoginEvent(caller, role, "user@pkgtech.support");
   };
 
-  func _recordLoginEventInternal(user : Principal, role : Text, email : Text) {
-    let eventId = _getNextLoginEventId();
+  func recordLoginEvent(user : Principal, role : Text, email : Text) {
+    let eventId = getNextLoginEventId();
     let name = switch (userProfiles.get(user)) {
       case (?p) { p.displayName };
       case (null) { "Unknown User" };
@@ -196,7 +191,7 @@ actor {
     loginEvents.add(eventId, event);
   };
 
-  func _getNextLoginEventId() : Nat {
+  func getNextLoginEventId() : Nat {
     let count = switch (loginEventIdCounter.get(0)) {
       case (null) { 0 };
       case (?i) { i };
@@ -296,7 +291,6 @@ actor {
       return #failed("Unauthorized: Only users can send messages");
     };
 
-    // Rate limiting: 1 message per second
     if (not checkRateLimit(caller, lastMessageTime, 1_000_000_000)) {
       return #failed("Rate limit exceeded: Please wait before sending another message");
     };
@@ -319,7 +313,7 @@ actor {
       return #failed("Unauthorized: Can only send messages within active support sessions");
     };
 
-    let messageId : Nat = _getNextMessageId();
+    let messageId : Nat = getNextMessageId();
 
     let message : ChatMessage = {
       messageId;
@@ -347,7 +341,6 @@ actor {
       return #failed("Unauthorized: Only users can send messages");
     };
 
-    // Rate limiting: 1 message per second
     if (not checkRateLimit(caller, lastMessageTime, 1_000_000_000)) {
       return #failed("Rate limit exceeded: Please wait before sending another message");
     };
@@ -365,12 +358,10 @@ actor {
         return #failed("Ticket does not exist");
       };
       case (?ticket) {
-        // Only the customer or technician of this ticket can send messages
         if (ticket.customer != caller and ticket.technician != caller) {
           return #failed("Unauthorized: You are not a participant of this ticket");
         };
 
-        // Ticket must be active (open or inProgress)
         switch (ticket.status) {
           case (#resolved) {
             return #failed("Cannot send messages on a resolved ticket");
@@ -380,7 +371,7 @@ actor {
 
         let recipient = if (ticket.customer == caller) { ticket.technician } else { ticket.customer };
 
-        let messageId : Nat = _getNextMessageId();
+        let messageId : Nat = getNextMessageId();
 
         let message : ChatMessage = {
           messageId;
@@ -394,7 +385,6 @@ actor {
         };
 
         messages.add(messageId, message);
-        // Index this message to the ticket
         messageTicketIndex.add(messageId, ticketId);
         updateRateLimit(caller, lastMessageTime);
 
@@ -403,7 +393,7 @@ actor {
     };
   };
 
-  func _getNextMessageId() : Nat {
+  func getNextMessageId() : Nat {
     let count = switch (messageIdCounter.get(0)) {
       case (null) { 0 };
       case (?i) { i };
@@ -422,23 +412,17 @@ actor {
         Runtime.trap("Ticket does not exist");
       };
       case (?ticket) {
-        // Only the customer, technician, or an admin can read messages for this ticket
         if (ticket.customer != caller and ticket.technician != caller and not AccessControl.isAdmin(accessControlState, caller)) {
           Runtime.trap("Unauthorized: You are not a participant of this ticket");
         };
 
-        // Return messages that are either indexed to this ticket OR
-        // exchanged between the customer and technician of this ticket
-        // (to support legacy messages sent via sendMessage without ticket scoping)
         let customer = ticket.customer;
         let technician = ticket.technician;
 
         messages.values().toArray().filter(func(msg : ChatMessage) : Bool {
-          // Check if message is indexed to this ticket
           switch (messageTicketIndex.get(msg.messageId)) {
             case (?tid) { tid == ticketId };
             case (null) {
-              // Fall back: message is between the ticket's customer and technician
               (msg.sender == customer and msg.recipient == technician) or
               (msg.sender == technician and msg.recipient == customer)
             };
@@ -606,7 +590,7 @@ actor {
       Runtime.trap("You must have a resolved support session to submit a rating");
     };
 
-    let ratingId : Nat = _getNextRatingId();
+    let ratingId : Nat = getNextRatingId();
 
     let ratingData : ChatFeedback = {
       sessionId = ratingId;
@@ -634,7 +618,7 @@ actor {
     };
   };
 
-  func _getNextRatingId() : Nat {
+  func getNextRatingId() : Nat {
     let count = switch (ratingIdCounter.get(0)) {
       case (null) { 0 };
       case (?i) { i };
@@ -909,8 +893,6 @@ actor {
     };
   };
 
-  // updateTicketStatus: customers can reopen resolved tickets,
-  // technicians and admins can update to any status.
   public shared ({ caller }) func updateTicketStatus(ticketId : Nat, status : TicketStatusOld) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can update tickets");
@@ -921,7 +903,6 @@ actor {
         Runtime.trap("Failed to update ticket. Ticket does not exist");
       };
       case (?ticket) {
-        // Only ticket participants (customer or technician) or admins can update
         if (ticket.customer != caller and ticket.technician != caller and not AccessControl.isAdmin(accessControlState, caller)) {
           Runtime.trap("Unauthorized: Only ticket participants can update tickets");
         };
@@ -979,6 +960,8 @@ actor {
     };
   };
 
+  // Correct initialization of ticketsByAssignee
+
   public query ({ caller }) func getUserTickets() : async [SupportTicket] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access support tickets");
@@ -986,6 +969,42 @@ actor {
     supportTickets.values().toArray().filter(func(ticket : SupportTicket) : Bool {
       ticket.customer == caller or ticket.technician == caller
     });
+  };
+
+  // Get history for customer dashboard (resolved tickets)
+  public query ({ caller }) func getCustomerHistory() : async [SupportTicket] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access support tickets");
+    };
+
+    let resolvedTickets = supportTickets.values().toArray().filter(
+      func(ticket) { ticket.customer == caller and ticket.status == #resolved }
+    );
+    resolvedTickets;
+  };
+
+  // Get expert's resolved tickets for history section
+  public query ({ caller }) func getExpertHistory() : async [SupportTicket] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access support tickets");
+    };
+
+    if (isExpert(caller)) {
+      let resolvedTickets = supportTickets.values().toArray().filter(
+        func(ticket) { ticket.technician == caller and ticket.status == #resolved }
+      );
+      resolvedTickets;
+    } else {
+      Runtime.trap("Unauthorized: Only experts can access this information");
+    };
+  };
+
+  // Helper function to check if caller is an expert
+  func isExpert(caller : Principal) : Bool {
+    switch (userProfiles.get(caller)) {
+      case (?profile) { profile.isTechnician };
+      case (null) { false };
+    };
   };
 
   public query ({ caller }) func getTicket(ticketId : Nat) : async ?SupportTicket {
@@ -1070,7 +1089,6 @@ actor {
   };
 
   // Knowledge Base functions
-  // createKBArticle: admin-only — KB articles are managed content, not user-generated.
   public shared ({ caller }) func createKBArticle(
     title : Text,
     category : KnowledgeCategory,
@@ -1096,7 +1114,6 @@ actor {
     kbArticles.add(articleId, article);
   };
 
-  // updateKBArticle: admin-only
   public shared ({ caller }) func updateKBArticle(
     articleId : Nat,
     title : Text,
@@ -1128,7 +1145,6 @@ actor {
     };
   };
 
-  // deleteKBArticle: admin-only
   public shared ({ caller }) func deleteKBArticle(articleId : Nat) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #admin)) {
       Runtime.trap("Unauthorized: Only admins can delete knowledge base articles");
@@ -1144,7 +1160,6 @@ actor {
     };
   };
 
-  // incrementArticleViewCount: open to all (no auth required — public KB self-service)
   public shared ({ caller }) func incrementArticleViewCount(articleId : Nat) : async () {
     switch (kbArticles.get(articleId)) {
       case (null) {
@@ -1175,7 +1190,6 @@ actor {
     count;
   };
 
-  // searchKBArticles: open to all (public self-service KB)
   public query func searchKBArticles(searchTerm : Text) : async [KBArticle] {
     let lowerTerm = searchTerm.toLower();
     let iter = kbArticles.values();
@@ -1190,7 +1204,6 @@ actor {
     searchResultsIter.toArray();
   };
 
-  // getArticlesByCategory: open to all (public self-service KB)
   public query func getArticlesByCategory(category : KnowledgeCategory) : async [KBArticle] {
     let iter = kbArticles.values();
     let articlesList = iter.toList<KBArticle>();
@@ -1201,17 +1214,14 @@ actor {
     filteredArticlesIter.toArray();
   };
 
-  // getAllKBArticles: open to all (public self-service KB)
   public query func getAllKBArticles() : async [KBArticle] {
     kbArticles.values().toArray();
   };
 
-  // getKBArticle: open to all (public self-service KB)
   public query func getKBArticle(articleId : Nat) : async ?KBArticle {
     kbArticles.get(articleId);
   };
 
-  // Analytics: admin/technician only
   public query ({ caller }) func getAnalyticsMetrics() : async {
     totalTickets : Nat;
     openTickets : Nat;
@@ -1219,7 +1229,6 @@ actor {
     resolutionRate : Nat;
   } {
     if (not AccessControl.isAdmin(accessControlState, caller)) {
-      // Also allow technicians
       switch (userProfiles.get(caller)) {
         case (?profile) {
           if (not profile.isTechnician) {
@@ -1246,7 +1255,6 @@ actor {
     };
   };
 
-  // Persistent Fields for Payment Toggle State
   public type PaymentToggleState = {
     toggleEnabled : Bool;
     paymentRequested : Bool;
@@ -1256,7 +1264,6 @@ actor {
     active : Bool;
   };
 
-  // Payment Toggle Type aliases
   public type ToggleStatus = {
     #enabled;
     #disabled;
@@ -1353,7 +1360,6 @@ actor {
     privateMessages : [ChatMessage];
   };
 
-  // Helper: verify caller is a technician (has #user permission and isTechnician profile flag)
   func validateTechnician(caller : Principal) {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can perform this action");
@@ -1370,7 +1376,6 @@ actor {
     };
   };
 
-  // Helper: verify caller is the technician of the given ticket
   func validateTicketTechnician(caller : Principal, ticketId : Nat) {
     validateTechnician(caller);
     switch (supportTickets.get(ticketId)) {
@@ -1385,14 +1390,12 @@ actor {
     };
   };
 
-  // Set payment toggle state - only the assigned technician of the ticket may call this
   public shared ({ caller }) func setToggleState(
     ticketId : Nat,
     toggleEnabled : Bool,
     paymentRequested : Bool,
     stripeSessionId : ?Text
   ) : async () {
-    // Verify caller is a technician and is the assigned technician for this ticket
     validateTicketTechnician(caller, ticketId);
 
     switch (supportTickets.get(ticketId)) {
@@ -1413,7 +1416,6 @@ actor {
     };
   };
 
-  // Get payment toggle state for a ticket - only ticket participants (customer or technician) or admins
   public query ({ caller }) func getToggleState(ticketId : Nat) : async ?PaymentToggleState {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access payment toggle state");
@@ -1432,7 +1434,6 @@ actor {
     };
   };
 
-  // Get persistent payment toggle status for UI - only ticket participants or admins
   public query ({ caller }) func getPersistentToggleState(ticketId : Nat) : async ToggleStatus {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access payment toggle state");
@@ -1456,7 +1457,6 @@ actor {
     };
   };
 
-  // End chat session explicitly - only the assigned technician of the ticket may call this
   public shared ({ caller }) func endChatSession(ticketId : Nat) : async () {
     validateTicketTechnician(caller, ticketId);
 
@@ -1480,14 +1480,12 @@ actor {
     };
   };
 
-  // Premium Chat Tiers
   public type ChatTier = {
     #basic;
     #premium;
     #sponsorship;
   };
 
-  // Get available chat tiers - open to all authenticated users
   public query ({ caller }) func getAvailableTiers() : async [ChatTier] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view available tiers");
@@ -1495,7 +1493,6 @@ actor {
     [#basic, #premium, #sponsorship];
   };
 
-  // Update tier selection state - only ticket participants
   public query ({ caller }) func updateTierSelection(ticketId : Nat, tier : ChatTier) : async ChatTier {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can update tier selection");
@@ -1540,7 +1537,6 @@ actor {
     };
   };
 
-  // Get supported currencies - open to all authenticated users
   public query ({ caller }) func getSupportedCurrencies() : async [Text] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view supported currencies");

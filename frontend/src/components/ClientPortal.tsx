@@ -1,207 +1,173 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Plus, History, Ticket, Star } from 'lucide-react';
+import TicketListView from './TicketListView';
+import ServiceHistoryTimeline from './ServiceHistoryTimeline';
+import TicketCreationForm from './TicketCreationForm';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Ticket, History, CreditCard, Plus, Shield, CheckCircle } from 'lucide-react';
-import TicketListView from './TicketListView';
-import TicketCreationForm from './TicketCreationForm';
-import ServiceHistoryTimeline from './ServiceHistoryTimeline';
-import { useGetUserTickets } from '../hooks/useTickets';
 
-const SUPPORT_PLANS = [
-  {
-    name: 'Basic',
-    price: '$9.99/mo',
-    features: ['Email support', '48h response time', '5 tickets/month'],
-    color: 'border-blue-200',
-    popular: false,
-  },
-  {
-    name: 'Premium',
-    price: '$29.99/mo',
-    features: ['Priority support', '4h response time', 'Unlimited tickets', 'Live chat'],
-    color: 'border-primary',
-    popular: true,
-  },
-  {
-    name: 'Enterprise',
-    price: '$99.99/mo',
-    features: [
-      'Dedicated agent',
-      '1h response time',
-      'Unlimited tickets',
-      '24/7 support',
-      'SLA guarantee',
-    ],
-    color: 'border-purple-200',
-    popular: false,
-  },
-];
+interface ClientPortalProps {
+  onStartChat?: () => void;
+}
 
-export default function ClientPortal() {
-  const { data: tickets } = useGetUserTickets();
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+const ClientPortal: React.FC<ClientPortalProps> = ({ onStartChat }) => {
+  const [showCreateTicket, setShowCreateTicket] = useState(false);
+  const [activeTab, setActiveTab] = useState('tickets');
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2
-            className="text-xl font-display font-bold flex items-center gap-2"
-            style={{ color: 'var(--foreground)' }}
-          >
-            <Shield className="w-5 h-5" style={{ color: 'var(--primary)' }} />
-            Client Portal
-          </h2>
-          <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            Manage your support tickets and account
-          </p>
-        </div>
-
-        {/* New Ticket button — no payment gate, always accessible to authenticated customers */}
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button
-              size="sm"
-              className="rounded-xl font-semibold transition-all hover:scale-105"
-              style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
-            >
-              <Plus className="w-4 h-4 mr-1" /> New Ticket
-            </Button>
-          </DialogTrigger>
-          <DialogContent
-            className="max-w-lg rounded-2xl border-2 shadow-modal"
-            style={{ background: 'var(--modal-bg)', borderColor: 'var(--primary)' }}
-          >
-            <DialogHeader>
-              <DialogTitle
-                className="font-display font-bold"
-                style={{ color: 'var(--foreground)' }}
-              >
-                Create Support Ticket
-              </DialogTitle>
-            </DialogHeader>
-            <TicketCreationForm
-              onSuccess={() => setShowCreateDialog(false)}
-              onCancel={() => setShowCreateDialog(false)}
-            />
-          </DialogContent>
-        </Dialog>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/50">
+        <h2 className="font-semibold text-foreground">My Support Portal</h2>
+        <Button
+          size="sm"
+          className="btn-primary gap-1.5"
+          onClick={() => setShowCreateTicket(true)}
+        >
+          <Plus className="h-4 w-4" />
+          New Ticket
+        </Button>
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="tickets">
-        <TabsList
-          className="w-full p-1 rounded-2xl gap-1 h-auto flex"
-          style={{ background: 'var(--muted)' }}
-        >
-          <TabsTrigger
-            value="tickets"
-            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-sm font-medium transition-all duration-200 data-[state=active]:shadow-md data-[state=active]:font-semibold"
-          >
-            <Ticket className="w-4 h-4" />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <TabsList className="mx-4 mt-3 mb-0 grid grid-cols-3 bg-muted/50">
+          <TabsTrigger value="tickets" className="gap-1.5 text-xs">
+            <Ticket className="h-3.5 w-3.5" />
             My Tickets
           </TabsTrigger>
-          <TabsTrigger
-            value="history"
-            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-sm font-medium transition-all duration-200 data-[state=active]:shadow-md data-[state=active]:font-semibold"
-          >
-            <History className="w-4 h-4" />
-            History
+          <TabsTrigger value="history" className="gap-1.5 text-xs">
+            <History className="h-3.5 w-3.5" />
+            Service History
           </TabsTrigger>
-          <TabsTrigger
-            value="payments"
-            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-sm font-medium transition-all duration-200 data-[state=active]:shadow-md data-[state=active]:font-semibold"
-          >
-            <CreditCard className="w-4 h-4" />
+          <TabsTrigger value="plans" className="gap-1.5 text-xs">
+            <Star className="h-3.5 w-3.5" />
             Plans
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="tickets" className="mt-4 animate-fade-in">
-          {/* TicketListView fetches its own data internally */}
-          <TicketListView />
+        <TabsContent value="tickets" className="flex-1 overflow-y-auto mt-0 p-4">
+          <TicketListView showAll={false} />
         </TabsContent>
 
-        <TabsContent value="history" className="mt-4 animate-fade-in">
-          <ServiceHistoryTimeline tickets={tickets || []} />
+        <TabsContent value="history" className="flex-1 overflow-y-auto mt-0 p-4">
+          <ServiceHistoryTimeline />
         </TabsContent>
 
-        <TabsContent value="payments" className="mt-4 animate-fade-in">
+        <TabsContent value="plans" className="flex-1 overflow-y-auto mt-0 p-4">
           <div className="space-y-4">
-            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-              Choose a support plan that fits your needs
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {SUPPORT_PLANS.map((plan) => (
-                <Card
-                  key={plan.name}
-                  className={`border-2 ${plan.color} relative transition-all duration-200 hover:shadow-card-hover hover:-translate-y-1`}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge
-                        className="text-xs font-semibold px-3 py-1"
-                        style={{
-                          background: 'var(--primary)',
-                          color: 'var(--primary-foreground)',
-                        }}
-                      >
-                        Most Popular
-                      </Badge>
-                    </div>
-                  )}
-                  <CardHeader className="pb-2 pt-6">
-                    <CardTitle className="text-lg">{plan.name}</CardTitle>
-                    <CardDescription
-                      className="text-2xl font-bold"
-                      style={{ color: 'var(--primary)' }}
-                    >
-                      {plan.price}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-center gap-2 text-sm">
-                          <CheckCircle
-                            className="w-4 h-4 flex-shrink-0"
-                            style={{ color: 'var(--success)' }}
-                          />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      className="w-full mt-4 rounded-xl font-semibold"
-                      variant={plan.popular ? 'default' : 'outline'}
-                      style={
-                        plan.popular
-                          ? {
-                              background: 'var(--primary)',
-                              color: 'var(--primary-foreground)',
-                            }
-                          : {}
-                      }
-                    >
-                      Get Started
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+            <h3 className="font-semibold text-foreground text-lg">Support Plans</h3>
+            <div className="grid gap-4">
+              {/* Basic Plan */}
+              <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h4 className="font-bold text-foreground">Basic Support</h4>
+                    <p className="text-muted-foreground text-sm">Essential tech help</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-primary">₹299</p>
+                    <p className="text-xs text-muted-foreground">per session</p>
+                  </div>
+                </div>
+                <ul className="space-y-1.5 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <span className="text-success">✓</span> Remote diagnosis
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-success">✓</span> Basic troubleshooting
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-success">✓</span> 24–48 hr turnaround
+                  </li>
+                </ul>
+              </div>
+
+              {/* Premium Plan */}
+              <div className="bg-primary/5 border-2 border-primary rounded-xl p-5 shadow-card relative">
+                <div className="absolute -top-3 left-4">
+                  <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
+                    POPULAR
+                  </span>
+                </div>
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h4 className="font-bold text-foreground">Premium Support</h4>
+                    <p className="text-muted-foreground text-sm">Priority assistance</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-primary">₹599</p>
+                    <p className="text-xs text-muted-foreground">per session</p>
+                  </div>
+                </div>
+                <ul className="space-y-1.5 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <span className="text-success">✓</span> Everything in Basic
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-success">✓</span> Priority queue
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-success">✓</span> Screen sharing support
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-success">✓</span> Same-day resolution
+                  </li>
+                </ul>
+              </div>
+
+              {/* Sponsorship Plan */}
+              <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h4 className="font-bold text-foreground">Sponsorship</h4>
+                    <p className="text-muted-foreground text-sm">Dedicated expert</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-secondary">₹1499</p>
+                    <p className="text-xs text-muted-foreground">per month</p>
+                  </div>
+                </div>
+                <ul className="space-y-1.5 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <span className="text-success">✓</span> Everything in Premium
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-success">✓</span> Dedicated technician
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-success">✓</span> Unlimited sessions
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-success">✓</span> On-site visits (Jaipur)
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Create Ticket Dialog */}
+      <Dialog open={showCreateTicket} onOpenChange={setShowCreateTicket}>
+        <DialogContent className="max-w-lg bg-modal-bg border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Create New Support Ticket</DialogTitle>
+          </DialogHeader>
+          <TicketCreationForm
+            onSuccess={() => setShowCreateTicket(false)}
+            onCancel={() => setShowCreateTicket(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
-}
+};
+
+export default ClientPortal;

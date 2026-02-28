@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-loginprompt-hero-landing-component-headline-and-description-to-reflect-everyday-device-support-set-the-headline-to-tech-support-expert-fast-fixes-for-laptops-desktops-mobiles-printers-10-years-experience-and-replace-any-existing-long-description-with-the-short-copy-jaipur-based-pro-fixing-your-laptops-desktops-mobiles-and-printers-remotely-or-on-site-quick-affordable-solutions-for-home-office-message-for-same-day-help",
-      "featureTitle": "Update the LoginPrompt (hero/landing) component headline and description to reflect everyday device support: set the headline to 'Tech Support Expert | Fast Fixes for Laptops, Desktops, Mobiles & Printers | 10+ Years Experience' and replace any existing long description with the short copy: 'Jaipur-based pro fixing your laptops, desktops, mobiles, and printers remotely or on-site. Quick, affordable solutions for home/office. Message for same-day help!'",
+      "featureId": "feature-remove-the-payment-option-payment-field-payment-toggle-or-any-payment-related-ui-element-from-the-ticket-creation-form-in-the-customerdashboard-so-customers-cannot-set-payment-details-when-creating-a-new-ticket",
+      "featureTitle": "Remove the payment option (payment field, payment toggle, or any payment-related UI element) from the ticket creation form in the CustomerDashboard so customers cannot set payment details when creating a new ticket.",
       "files": [
-        "frontend/src/components/LoginPrompt.tsx"
+        "frontend/src/components/TicketCreationForm.tsx"
       ],
       "components": [
         "authorization@3.0.0",
@@ -21,15 +21,16 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-24"
+        "REQ-1"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-skills-services-section-to-the-loginprompt-landing-page-listing-four-bullet-point-skills-laptop-desktop-troubleshooting-upgrades-mobile-repair-setup-android-ios-printer-connectivity-ink-issues-remote-support-via-chat-video",
-      "featureTitle": "Add a Skills/Services section to the LoginPrompt landing page listing four bullet-point skills: 'Laptop/Desktop troubleshooting & upgrades', 'Mobile repair/setup (Android/iOS)', 'Printer connectivity & ink issues', 'Remote support via chat/video'.",
+      "featureId": "feature-fix-the-expert-technician-s-payment-request-toggle-in-the-chatsection-so-that-toggling-the-payment-button-opens-the-payment-request-popup-modal-correctly-the-modal-must-appear-when-the-expert-activates-the-payment-toggle",
+      "featureTitle": "Fix the expert/technician's payment request toggle in the ChatSection so that toggling the payment button opens the payment request popup/modal correctly. The modal must appear when the expert activates the payment toggle.",
       "files": [
-        "frontend/src/components/LoginPrompt.tsx"
+        "frontend/src/components/ChatSection.tsx",
+        "frontend/src/components/PaymentRequestModal.tsx"
       ],
       "components": [
         "authorization@3.0.0",
@@ -45,15 +46,17 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-25"
+        "REQ-2"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-pricing-services-section-to-the-loginprompt-landing-page-displaying-three-clear-service-tiers-in-inr-basic-diagnostic-500-full-laptop-mobile-fix-1-500-printer-setup-800-each-tier-should-emphasize-a-24-48-hour-turnaround-promise",
-      "featureTitle": "Add a Pricing/Services section to the LoginPrompt landing page displaying three clear service tiers in INR: 'Basic Diagnostic: ₹500', 'Full Laptop/Mobile Fix: ₹1,500', 'Printer Setup: ₹800'. Each tier should emphasize a 24–48 hour turnaround promise.",
+      "featureId": "feature-fix-the-service-history-history-tab-on-the-customerdashboard-clientportal-so-that-resolved-tickets-and-past-interactions-are-correctly-fetched-from-the-backend-and-displayed-the-history-list-must-not-be-empty-when-resolved-tickets-exist",
+      "featureTitle": "Fix the Service History / history tab on the CustomerDashboard (ClientPortal) so that resolved tickets and past interactions are correctly fetched from the backend and displayed. The history list must not be empty when resolved tickets exist.",
       "files": [
-        "frontend/src/components/LoginPrompt.tsx"
+        "frontend/src/components/ClientPortal.tsx",
+        "frontend/src/components/ServiceHistoryTimeline.tsx",
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "authorization@3.0.0",
@@ -69,15 +72,16 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-26"
+        "REQ-3"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-testimonials-section-to-the-loginprompt-landing-page-with-at-least-three-short-client-quotes-fixed-my-printer-in-30-mins-laptop-running-smooth-again-and-one-additional-quote-about-mobile-repair-display-each-as-a-styled-testimonial-card-with-attribution",
-      "featureTitle": "Add a Testimonials section to the LoginPrompt landing page with at least three short client quotes: 'Fixed my printer in 30 mins!', 'Laptop running smooth again', and one additional quote about mobile repair. Display each as a styled testimonial card with attribution.",
+      "featureId": "feature-fix-the-history-ticket-history-section-on-the-expertdashboard-so-that-past-and-resolved-tickets-handled-by-the-expert-are-correctly-fetched-and-displayed-the-list-must-not-be-empty-when-historical-ticket-data-exists",
+      "featureTitle": "Fix the history/ticket history section on the ExpertDashboard so that past and resolved tickets handled by the expert are correctly fetched and displayed. The list must not be empty when historical ticket data exists.",
       "files": [
-        "frontend/src/components/LoginPrompt.tsx"
+        "frontend/src/components/ExpertDashboard.tsx",
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "authorization@3.0.0",
@@ -93,15 +97,20 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-27"
+        "REQ-4"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-visuals-icons-strip-to-the-loginprompt-landing-page-with-clean-device-icons-for-laptop-mobile-phone-and-printer-rendered-inline-to-visually-reinforce-the-service-categories-add-a-banner-or-hero-tagline-element-reading-device-fixes-done-right-using-the-generated-banner-image-device-fixes-banner-dim-1200x400-png-and-device-icons-laptop-icon-dim-64x64-png-phone-icon-dim-64x64-png-printer-icon-dim-64x64-png-served-from-frontend-public-assets-generated",
-      "featureTitle": "Add a visuals/icons strip to the LoginPrompt landing page with clean device icons for laptop, mobile phone, and printer, rendered inline to visually reinforce the service categories. Add a banner or hero tagline element reading 'Device Fixes Done Right' using the generated banner image (device-fixes-banner.dim_1200x400.png) and device icons (laptop-icon.dim_64x64.png, phone-icon.dim_64x64.png, printer-icon.dim_64x64.png) served from frontend/public/assets/generated.",
+      "featureId": "feature-resolve-the-deployment-error-that-caused-the-previous-build-to-fail-audit-the-backend-motoko-actor-backend-main-mo-and-frontend-entry-files-for-any-compilation-or-runtime-errors-fix-type-mismatches-missing-imports-or-malformed-function-signatures-and-ensure-the-project-builds-and-deploys-successfully",
+      "featureTitle": "Resolve the deployment error that caused the previous build to fail. Audit the backend Motoko actor (backend/main.mo) and frontend entry files for any compilation or runtime errors, fix type mismatches, missing imports, or malformed function signatures, and ensure the project builds and deploys successfully.",
       "files": [
-        "frontend/src/components/LoginPrompt.tsx"
+        "frontend/src/components/ChatSection.tsx",
+        "frontend/src/components/CustomerDashboard.tsx",
+        "frontend/src/components/ExpertDashboard.tsx",
+        "frontend/src/hooks/usePaymentToggle.ts",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/hooks/useTickets.ts"
       ],
       "components": [
         "authorization@3.0.0",
@@ -117,31 +126,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-28"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-a-portfolio-work-samples-section-to-the-loginprompt-landing-page-showcasing-2-3-device-fix-scenarios-use-the-generated-portfolio-images-printer-setup-before-after-dim-600x400-png-mobile-repair-demo-dim-600x400-png-laptop-fix-demo-dim-600x400-png-served-from-frontend-public-assets-generated-with-short-captions-describing-each-scenario-e-g-before-after-printer-setup-mobile-screen-repair-demo-laptop-upgrade-complete",
-      "featureTitle": "Add a Portfolio/Work Samples section to the LoginPrompt landing page showcasing 2–3 device fix scenarios. Use the generated portfolio images (printer-setup-before-after.dim_600x400.png, mobile-repair-demo.dim_600x400.png, laptop-fix-demo.dim_600x400.png) served from frontend/public/assets/generated, with short captions describing each scenario (e.g., 'Before/After: Printer Setup', 'Mobile Screen Repair Demo', 'Laptop Upgrade Complete').",
-      "files": [
-        "frontend/src/components/LoginPrompt.tsx"
-      ],
-      "components": [
-        "authorization@3.0.0",
-        "stripe@3.0.0",
-        "http-outcalls@3.0.0",
-        "blob-storage@4.0.0",
-        "qr-code@1.0.0",
-        "camera@1.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-29"
+        "REQ-5"
       ],
       "confidence": "high"
     }

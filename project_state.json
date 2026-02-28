@@ -1,347 +1,57 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 19,
-  "summary": "IT support/helpdesk website with ticketing system, live chat, knowledge base, client portal, and analytics features.",
-  "architectural_notes": [
-    "Razorpay integration required for client portal payments",
-    "AI bot needed for live chat FAQ handling with human handover support",
-    "Separate login pages for expert and customer roles; home page should not contain expert login link",
-    "Ticket status modification is restricted to experts/admins only; customers have read-only access to ticket status",
-    "Ticket creation must not require payment; payment gate must be removed from ticket creation flow",
-    "PayU API integration required for payment gateway (replacing or alongside Razorpay)"
-  ],
+  "projectStateVersion": 3,
+  "summary": "Project with customer and expert dashboards. Fixing deployment errors, history display issues on customer/expert pages, and payment-related UI bugs in ticket creation.",
+  "architectural_notes": [],
   "known_issues": [
-    "Chat history not visible on customer side; customers cannot reply in live chat"
+    "Customer and expert pages are not showing history",
+    "Deployment error encountered during build"
   ],
-  "isFixRequest": false,
-  "imageRequirements": "## Required Images\n- Wide banner with bold text 'Device Fixes Done Right' on a clean white/light-grey background with subtle tech iconography silhouettes (device-fixes-banner.dim_1200x400.png)\n- Flat vector illustration of a laptop computer, front-facing, minimal line-art style on transparent background (laptop-icon.dim_64x64.png)\n- Flat vector illustration of a smartphone, front-facing, minimal line-art style on transparent background (phone-icon.dim_64x64.png)\n- Flat vector illustration of a desktop inkjet printer, front-facing, minimal line-art style on transparent background (printer-icon.dim_64x64.png)\n- Side-by-side before/after illustration of a printer setup: left panel showing tangled cables and offline status, right panel showing neat cables and green connected status (printer-setup-before-after.dim_600x400.png)\n- Illustration of a technician holding a smartphone showing a cracked screen on the left and a repaired screen on the right (mobile-repair-demo.dim_600x400.png)\n- Illustration of a laptop on a desk showing a performance boost graphic with a speedometer going from slow to fast (laptop-fix-demo.dim_600x400.png)",
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-publish-the-current-version-of-the-app-to-production-so-it-is-live-and-accessible-to-users",
-      "title": "Publish the current version of the app to production so it is live and accessible to users.",
+      "id": "feature-remove-the-payment-option-payment-field-payment-toggle-or-any-payment-related-ui-element-from-the-ticket-creation-form-in-the-customerdashboard-so-customers-cannot-set-payment-details-when-creating-a-new-ticket",
+      "title": "Remove the payment option (payment field, payment toggle, or any payment-related UI element) from the ticket creation form in the CustomerDashboard so customers cannot set payment details when creating a new ticket.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-implement-a-full-ticketing-system-with-support-for-ticket-creation-via-form-priority-levels-low-medium-high-critical-sla-tracking-response-and-resolution-time-targets-per-priority-status-updates-open-in-progress-pending-resolved-closed-and-email-style-notification-display-within-the-ui-store-ticket-data-in-the-backend-actor-with-fields-for-id-title-description-priority-status-sla-deadlines-assignee-and-timestamps",
-      "title": "Implement a full ticketing system with support for ticket creation via form, priority levels (Low, Medium, High, Critical), SLA tracking (response and resolution time targets per priority), status updates (Open, In Progress, Pending, Resolved, Closed), and email-style notification display within the UI. Store ticket data in the backend actor with fields for id, title, description, priority, status, SLA deadlines, assignee, and timestamps.",
+      "id": "feature-fix-the-expert-technician-s-payment-request-toggle-in-the-chatsection-so-that-toggling-the-payment-button-opens-the-payment-request-popup-modal-correctly-the-modal-must-appear-when-the-expert-activates-the-payment-toggle",
+      "title": "Fix the expert/technician's payment request toggle in the ChatSection so that toggling the payment button opens the payment request popup/modal correctly. The modal must appear when the expert activates the payment toggle.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-enhance-the-existing-aiassistantchat-component-to-act-as-a-first-response-ai-bot-capable-of-answering-common-it-faqs-printer-issues-windows-troubleshooting-password-resets-network-connectivity-using-an-expanded-keyword-matching-knowledge-base-and-provide-a-hand-off-to-human-agent-escalation-action-that-creates-a-support-ticket-and-routes-the-user-to-a-live-technician-session",
-      "title": "Enhance the existing AIAssistantChat component to act as a first-response AI bot capable of answering common IT FAQs (printer issues, Windows troubleshooting, password resets, network connectivity) using an expanded keyword-matching knowledge base, and provide a 'Hand off to human agent' escalation action that creates a support ticket and routes the user to a live technician session.",
+      "id": "feature-fix-the-service-history-history-tab-on-the-customerdashboard-clientportal-so-that-resolved-tickets-and-past-interactions-are-correctly-fetched-from-the-backend-and-displayed-the-history-list-must-not-be-empty-when-resolved-tickets-exist",
+      "title": "Fix the Service History / history tab on the CustomerDashboard (ClientPortal) so that resolved tickets and past interactions are correctly fetched from the backend and displayed. The history list must not be empty when resolved tickets exist.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-build-a-knowledge-base-section-accessible-from-the-main-navigation-it-must-include-a-searchable-library-of-self-service-articles-organized-by-categories-printers-peripherals-windows-troubleshooting-network-connectivity-account-passwords-hardware-articles-are-stored-in-the-backend-with-fields-for-id-title-category-body-rich-text-tags-and-view-count-display-a-search-bar-category-filter-article-cards-with-excerpts-and-a-full-article-detail-view",
-      "title": "Build a Knowledge Base section accessible from the main navigation. It must include a searchable library of self-service articles organized by categories (Printers & Peripherals, Windows Troubleshooting, Network & Connectivity, Account & Passwords, Hardware). Articles are stored in the backend with fields for id, title, category, body (rich text), tags, and view count. Display a search bar, category filter, article cards with excerpts, and a full article detail view.",
+      "id": "feature-fix-the-history-ticket-history-section-on-the-expertdashboard-so-that-past-and-resolved-tickets-handled-by-the-expert-are-correctly-fetched-and-displayed-the-list-must-not-be-empty-when-historical-ticket-data-exists",
+      "title": "Fix the history/ticket history section on the ExpertDashboard so that past and resolved tickets handled by the expert are correctly fetched and displayed. The list must not be empty when historical ticket data exists.",
       "reqIds": [
         "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-build-a-client-portal-tab-for-authenticated-customers-showing-a-list-of-all-their-tickets-with-status-and-priority-badges-a-service-history-timeline-of-resolved-tickets-the-ability-to-reopen-or-comment-on-existing-tickets-and-a-payment-section-supporting-razorpay-for-purchasing-support-plans-or-paying-for-resolved-incidents-the-portal-should-be-accessible-from-the-customerdashboard",
-      "title": "Build a Client Portal tab for authenticated customers showing: a list of all their tickets with status and priority badges, a service history timeline of resolved tickets, the ability to reopen or comment on existing tickets, and a payment section supporting Razorpay for purchasing support plans or paying for resolved incidents. The portal should be accessible from the CustomerDashboard.",
+      "id": "feature-resolve-the-deployment-error-that-caused-the-previous-build-to-fail-audit-the-backend-motoko-actor-backend-main-mo-and-frontend-entry-files-for-any-compilation-or-runtime-errors-fix-type-mismatches-missing-imports-or-malformed-function-signatures-and-ensure-the-project-builds-and-deploys-successfully",
+      "title": "Resolve the deployment error that caused the previous build to fail. Audit the backend Motoko actor (backend/main.mo) and frontend entry files for any compilation or runtime errors, fix type mismatches, missing imports, or malformed function signatures, and ensure the project builds and deploys successfully.",
       "reqIds": [
         "REQ-5"
       ],
       "version": 1
-    },
-    {
-      "id": "feature-build-an-analytics-dashboard-tab-visible-only-to-admin-technician-users-within-the-expertdashboard-display-key-metrics-including-average-first-reply-time-per-ticket-ticket-resolution-rate-resolved-vs-total-open-ticket-count-by-priority-agent-performance-table-tickets-handled-avg-resolution-time-per-technician-and-a-daily-ticket-volume-chart-over-the-last-30-days-compute-metrics-from-existing-ticket-and-message-data-stored-in-the-backend",
-      "title": "Build an Analytics Dashboard tab visible only to admin/technician users within the ExpertDashboard. Display key metrics including: average first reply time per ticket, ticket resolution rate (resolved vs total), open ticket count by priority, agent performance table (tickets handled, avg resolution time per technician), and a daily ticket volume chart over the last 30 days. Compute metrics from existing ticket and message data stored in the backend.",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-create-a-dedicated-customer-login-page-at-a-separate-route-e-g-customer-login-that-renders-the-existing-customerlogin-component-this-page-should-be-accessible-from-the-home-page-via-a-customer-login-call-to-action-but-expert-login-must-not-appear-alongside-it-on-the-home-page",
-      "title": "Create a dedicated Customer Login page at a separate route (e.g. /customer-login) that renders the existing CustomerLogin component. This page should be accessible from the home page via a 'Customer Login' call-to-action, but expert login must not appear alongside it on the home page.",
-      "reqIds": [
-        "REQ-8"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-remove-the-need-help-option-from-all-ui-locations-where-it-appears-including-any-navigation-links-buttons-floating-action-areas-or-prompts-that-reference-it",
-      "title": "Remove the 'Need Help' option from all UI locations where it appears, including any navigation links, buttons, floating action areas, or prompts that reference it.",
-      "reqIds": [
-        "REQ-10"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-improve-the-overall-colorful-visual-environment-of-the-application-buttons-and-clickable-interactive-elements-tabs-cards-action-icons-toggles-must-use-vivid-distinct-colors-per-category-state-with-strong-contrast-ratios-clear-hover-and-active-states-scale-shadow-or-color-shift-and-consistent-border-radius-and-padding-so-they-are-immediately-recognizable-as-interactive-apply-a-coherent-vibrant-color-palette-across-the-entire-ui-that-feels-polished-and-professional-while-improving-functional-clarity",
-      "title": "Improve the overall colorful visual environment of the application: buttons and clickable/interactive elements (tabs, cards, action icons, toggles) must use vivid, distinct colors per category/state with strong contrast ratios, clear hover and active states (scale, shadow, or color shift), and consistent border-radius and padding so they are immediately recognizable as interactive. Apply a coherent, vibrant color palette across the entire UI that feels polished and professional while improving functional clarity.",
-      "reqIds": [
-        "REQ-11"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-all-modals-dialogs-popups-and-overlay-panels-that-appear-above-the-main-page-content-must-render-with-a-distinct-background-color-different-from-the-main-page-background-and-the-standard-card-surface-color-so-users-can-immediately-identify-them-as-a-separate-layer-apply-this-consistently-to-all-existing-dialog-modal-components-including-profilesetupmodal-ticketcreationform-dialog-prechatform-chatfeedbackdialog-kbarticleeditor-when-used-as-a-modal-and-any-other-overlay-surfaces",
-      "title": "All modals, dialogs, popups, and overlay panels that appear above the main page content must render with a distinct background color (different from the main page background and the standard card/surface color) so users can immediately identify them as a separate layer. Apply this consistently to all existing dialog/modal components including ProfileSetupModal, TicketCreationForm dialog, PreChatForm, ChatFeedbackDialog, KBArticleEditor when used as a modal, and any other overlay surfaces.",
-      "reqIds": [
-        "REQ-12"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-enable-the-chat-with-expert-live-chat-tab-feature-for-customers-in-the-customerdashboard-unconditionally-removing-any-payment-gate-or-payment-requirement-check-that-currently-blocks-access-to-live-chat-customers-must-be-able-to-initiate-and-participate-in-chat-sessions-with-available-technicians-without-needing-a-paid-plan",
-      "title": "Enable the 'Chat with Expert' (Live Chat) tab/feature for customers in the CustomerDashboard unconditionally, removing any payment gate or payment requirement check that currently blocks access to live chat. Customers must be able to initiate and participate in chat sessions with available technicians without needing a paid plan.",
-      "reqIds": [
-        "REQ-13"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-restrict-ticket-status-modification-so-that-only-expert-technician-users-can-change-a-ticket-s-status-in-ticketdetailview-and-any-other-location-that-renders-a-status-update-control-dropdown-buttons-hide-or-disable-the-status-change-ui-when-the-current-user-is-a-customer-istechnician-false-customers-must-not-be-able-to-alter-ticket-status-under-any-circumstance",
-      "title": "Restrict ticket status modification so that only expert/technician users can change a ticket's status. In TicketDetailView and any other location that renders a status update control (dropdown, buttons), hide or disable the status-change UI when the current user is a customer (isTechnician === false). Customers must not be able to alter ticket status under any circumstance.",
-      "reqIds": [
-        "REQ-14"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-that-ticket-status-information-is-visible-only-to-the-customer-who-owns-the-ticket-in-ticketlistview-and-ticketdetailview-when-rendered-in-customer-context-display-the-status-badge-label-for-the-customer-s-own-tickets-in-the-expert-admin-view-expertdashboard-tickets-tab-do-not-expose-or-remove-any-existing-expert-visible-status-displays-the-restriction-applies-to-preventing-customers-from-seeing-tickets-that-are-not-theirs-not-to-hiding-status-from-experts",
-      "title": "Ensure that ticket status information is visible only to the customer who owns the ticket. In TicketListView and TicketDetailView, when rendered in customer context, display the status badge/label for the customer's own tickets. In the expert/admin view (ExpertDashboard Tickets tab), do not expose or remove any existing expert-visible status displays — the restriction applies to preventing customers from seeing tickets that are not theirs, not to hiding status from experts.",
-      "reqIds": [
-        "REQ-15"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-fix-the-chatsection-component-so-that-customers-can-see-the-full-chat-message-history-for-their-active-support-sessions-ensure-that-when-a-customer-selects-a-ticket-or-opens-a-chat-session-all-previously-exchanged-messages-are-fetched-from-the-backend-and-displayed-in-chronological-order-in-the-chat-ui-debug-and-resolve-any-query-filtering-principal-mismatch-or-data-fetching-issues-that-prevent-message-history-from-rendering-on-the-customer-side",
-      "title": "Fix the ChatSection component so that customers can see the full chat message history for their active support sessions. Ensure that when a customer selects a ticket or opens a chat session, all previously exchanged messages are fetched from the backend and displayed in chronological order in the chat UI. Debug and resolve any query filtering, principal mismatch, or data-fetching issues that prevent message history from rendering on the customer side.",
-      "reqIds": [
-        "REQ-17"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-fix-the-chatsection-component-so-that-customers-can-type-and-send-reply-messages-in-an-active-chat-session-ensure-the-message-input-field-and-send-button-are-rendered-and-functional-for-customers-not-just-technicians-debug-and-resolve-any-role-check-actor-call-or-state-management-issues-that-block-customers-from-submitting-new-messages-after-sending-the-new-message-must-appear-immediately-in-the-chat-thread",
-      "title": "Fix the ChatSection component so that customers can type and send reply messages in an active chat session. Ensure the message input field and send button are rendered and functional for customers (not just technicians). Debug and resolve any role-check, actor call, or state management issues that block customers from submitting new messages. After sending, the new message must appear immediately in the chat thread.",
-      "reqIds": [
-        "REQ-18"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-remove-all-payment-gate-checks-from-the-ticket-creation-flow-in-clientportal-and-ticketcreationform-customers-must-be-able-to-open-the-ticket-creation-dialog-and-submit-a-new-support-ticket-without-any-payment-plan-validation-stripe-razorpay-checks-or-subscription-status-checks-blocking-the-action-the-create-ticket-button-and-dialog-must-be-unconditionally-accessible-to-any-authenticated-customer",
-      "title": "Remove all payment gate checks from the ticket creation flow in ClientPortal and TicketCreationForm. Customers must be able to open the ticket creation dialog and submit a new support ticket without any payment plan validation, Stripe/Razorpay checks, or subscription status checks blocking the action. The 'Create Ticket' button and dialog must be unconditionally accessible to any authenticated customer.",
-      "reqIds": [
-        "REQ-19",
-        "REQ-21"
-      ],
-      "version": 2
-    },
-    {
-      "id": "feature-add-a-payment-toggle-control-switch-toggle-button-in-the-chatsection-component-that-is-visible-and-operable-only-by-expert-technician-users-when-the-toggle-is-enabled-for-a-specific-chat-session-ticket-the-backend-stores-the-payment-requested-state-for-that-session-the-customer-side-of-that-chat-must-detect-this-state-and-automatically-display-a-payment-popup-modal-prompting-the-customer-to-complete-a-payment",
-      "title": "Add a payment toggle control (switch/toggle button) in the ChatSection component that is visible and operable only by expert/technician users. When the toggle is enabled for a specific chat session/ticket, the backend stores the payment-requested state for that session. The customer side of that chat must detect this state and automatically display a payment popup/modal prompting the customer to complete a payment.",
-      "reqIds": [
-        "REQ-22"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-integrate-payu-as-the-payment-gateway-for-the-customer-facing-payment-popup-triggered-by-the-expert-payment-toggle-the-backend-actor-must-store-a-payu-merchant-key-and-salt-configurable-when-the-customer-payment-popup-is-displayed-it-must-construct-and-submit-a-payu-payment-form-or-redirect-with-the-required-parameters-txnid-amount-productinfo-firstname-email-phone-surl-furl-hash-handle-the-success-failure-callbacks-and-update-the-ticket-session-payment-status-in-the-backend-accordingly",
-      "title": "Integrate PayU as the payment gateway for the customer-facing payment popup triggered by the expert payment toggle. The backend actor must store a PayU merchant key and salt (configurable). When the customer payment popup is displayed, it must construct and submit a PayU payment form (or redirect) with the required parameters (txnid, amount, productinfo, firstname, email, phone, surl, furl, hash). Handle the success/failure callbacks and update the ticket/session payment status in the backend accordingly.",
-      "reqIds": [
-        "REQ-23"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-loginprompt-hero-landing-component-headline-and-description-to-reflect-everyday-device-support-set-the-headline-to-tech-support-expert-fast-fixes-for-laptops-desktops-mobiles-printers-10-years-experience-and-replace-any-existing-long-description-with-the-short-copy-jaipur-based-pro-fixing-your-laptops-desktops-mobiles-and-printers-remotely-or-on-site-quick-affordable-solutions-for-home-office-message-for-same-day-help",
-      "title": "Update the LoginPrompt (hero/landing) component headline and description to reflect everyday device support: set the headline to 'Tech Support Expert | Fast Fixes for Laptops, Desktops, Mobiles & Printers | 10+ Years Experience' and replace any existing long description with the short copy: 'Jaipur-based pro fixing your laptops, desktops, mobiles, and printers remotely or on-site. Quick, affordable solutions for home/office. Message for same-day help!'",
-      "reqIds": [
-        "REQ-24"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-skills-services-section-to-the-loginprompt-landing-page-listing-four-bullet-point-skills-laptop-desktop-troubleshooting-upgrades-mobile-repair-setup-android-ios-printer-connectivity-ink-issues-remote-support-via-chat-video",
-      "title": "Add a Skills/Services section to the LoginPrompt landing page listing four bullet-point skills: 'Laptop/Desktop troubleshooting & upgrades', 'Mobile repair/setup (Android/iOS)', 'Printer connectivity & ink issues', 'Remote support via chat/video'.",
-      "reqIds": [
-        "REQ-25"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-pricing-services-section-to-the-loginprompt-landing-page-displaying-three-clear-service-tiers-in-inr-basic-diagnostic-500-full-laptop-mobile-fix-1-500-printer-setup-800-each-tier-should-emphasize-a-24-48-hour-turnaround-promise",
-      "title": "Add a Pricing/Services section to the LoginPrompt landing page displaying three clear service tiers in INR: 'Basic Diagnostic: ₹500', 'Full Laptop/Mobile Fix: ₹1,500', 'Printer Setup: ₹800'. Each tier should emphasize a 24–48 hour turnaround promise.",
-      "reqIds": [
-        "REQ-26"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-testimonials-section-to-the-loginprompt-landing-page-with-at-least-three-short-client-quotes-fixed-my-printer-in-30-mins-laptop-running-smooth-again-and-one-additional-quote-about-mobile-repair-display-each-as-a-styled-testimonial-card-with-attribution",
-      "title": "Add a Testimonials section to the LoginPrompt landing page with at least three short client quotes: 'Fixed my printer in 30 mins!', 'Laptop running smooth again', and one additional quote about mobile repair. Display each as a styled testimonial card with attribution.",
-      "reqIds": [
-        "REQ-27"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-visuals-icons-strip-to-the-loginprompt-landing-page-with-clean-device-icons-for-laptop-mobile-phone-and-printer-rendered-inline-to-visually-reinforce-the-service-categories-add-a-banner-or-hero-tagline-element-reading-device-fixes-done-right-using-the-generated-banner-image-device-fixes-banner-dim-1200x400-png-and-device-icons-laptop-icon-dim-64x64-png-phone-icon-dim-64x64-png-printer-icon-dim-64x64-png-served-from-frontend-public-assets-generated",
-      "title": "Add a visuals/icons strip to the LoginPrompt landing page with clean device icons for laptop, mobile phone, and printer, rendered inline to visually reinforce the service categories. Add a banner or hero tagline element reading 'Device Fixes Done Right' using the generated banner image (device-fixes-banner.dim_1200x400.png) and device icons (laptop-icon.dim_64x64.png, phone-icon.dim_64x64.png, printer-icon.dim_64x64.png) served from frontend/public/assets/generated.",
-      "reqIds": [
-        "REQ-28"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-portfolio-work-samples-section-to-the-loginprompt-landing-page-showcasing-2-3-device-fix-scenarios-use-the-generated-portfolio-images-printer-setup-before-after-dim-600x400-png-mobile-repair-demo-dim-600x400-png-laptop-fix-demo-dim-600x400-png-served-from-frontend-public-assets-generated-with-short-captions-describing-each-scenario-e-g-before-after-printer-setup-mobile-screen-repair-demo-laptop-upgrade-complete",
-      "title": "Add a Portfolio/Work Samples section to the LoginPrompt landing page showcasing 2–3 device fix scenarios. Use the generated portfolio images (printer-setup-before-after.dim_600x400.png, mobile-repair-demo.dim_600x400.png, laptop-fix-demo.dim_600x400.png) served from frontend/public/assets/generated, with short captions describing each scenario (e.g., 'Before/After: Printer Setup', 'Mobile Screen Repair Demo', 'Laptop Upgrade Complete').",
-      "reqIds": [
-        "REQ-29"
-      ],
-      "version": 1
     }
   ],
-  "new_feature_requests": [
-    {
-      "id": "AR-1",
-      "summary": "Ticketing system with email/form integration, priorities, SLAs, and status updates",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Live chat widget with AI bot for FAQs and human handover",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Knowledge base for self-service articles (printer issues, Windows troubleshooting, etc.)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Client portal for ticket tracking, service history, and Razorpay payments",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-5",
-      "summary": "Analytics dashboard for first reply time, resolution rates, and agent performance",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-6",
-      "summary": "Create separate login pages for expert and customer; remove expert login link from the home page",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-7",
-      "summary": "Create a dedicated Expert Login page at a separate route (e.g. /expert-login) that renders the existing ExpertLogin component. This page should be accessible only via its direct URL and must not be linked or referenced from the home page or the main navigation.",
-      "reqIds": [
-        "REQ-7"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-9",
-      "summary": "Update the App.tsx router configuration to register the new /expert-login and /customer-login routes, and update the home page (LoginPrompt component) to remove any expert login link and only expose the customer login path.",
-      "reqIds": [
-        "REQ-9"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-10",
-      "summary": "Remove 'Need Help' option from the UI",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-11",
-      "summary": "Improve UI with colorful environment, better-styled buttons and clickable elements for improved functionality and visual clarity",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-12",
-      "summary": "Modals/popups/overlays that appear above the page should use a distinct background color to be easily identifiable from the main content",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-13",
-      "summary": "Enable 'Chat with Expert' feature for customers without requiring payment integration (temporary until payment is integrated)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-14",
-      "summary": "Only experts can modify ticket status; customers cannot change ticket status. Only customers can view their own ticket status.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-15",
-      "summary": "Change the host URL of the deployed application",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-16",
-      "summary": "Update the host URL configuration of the deployed application so that the app is served from the new/correct host URL. This includes updating any hardcoded references to the old host URL in frontend configuration files (e.g., environment variables, index.html base href, or any fetch/actor endpoint URLs) so all API calls and routing work correctly under the new host.",
-      "reqIds": [
-        "REQ-16"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-17",
-      "summary": "Fix chat history not visible on customer side and customers cannot reply in chat; automate error fixing",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-18",
-      "summary": "Allow customers to create tickets without payment integration (remove payment gate from ticket creation)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-22",
-      "summary": "Audit the backend `main.mo` actor for any authorization checks on `getChatMessages`, `sendMessage`, or equivalent chat query/update functions that incorrectly restrict customer principals from reading or writing their own chat messages. Ensure that customers can call these functions for sessions linked to their own tickets, while preventing access to other customers' sessions. Fix any overly restrictive or missing principal-based access control that causes the chat history and reply issues.",
-      "reqIds": [
-        "REQ-20"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-23",
-      "summary": "Add a toggle button for payment option in chat; when enabled by expert, a payment popup is triggered on the customer screen so the customer can make a payment",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-24",
-      "summary": "Integrate PayU API as payment gateway for processing customer payments",
-      "reqIds": [],
-      "status": "pending"
-    }
-  ],
-  "gameProjectType": "none",
-  "projectName": "IT Helpdesk Support Portal",
+  "new_feature_requests": [],
+  "projectName": "TechSupport Platform",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

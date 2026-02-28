@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import { UserProfile, ChatMessage, SupportTicket, ShoppingItem, TechnicianAvailability, ExternalBlob, LoginEvent } from '../backend';
-import { Principal } from '@icp-sdk/core/principal';
+import { useInternetIdentity } from './useInternetIdentity';
+import type { UserProfile, SupportTicket, KBArticle, KnowledgeCategory, ShoppingItem } from '../backend';
 
-// User Profile Queries
+// ─── User Profile ────────────────────────────────────────────────────────────
+
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
 
@@ -31,7 +32,7 @@ export function useSaveCallerUserProfile() {
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
       if (!actor) throw new Error('Actor not available');
-      await actor.saveCallerUserProfile(profile);
+      return actor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
@@ -39,100 +40,68 @@ export function useSaveCallerUserProfile() {
   });
 }
 
-// Login Tracking Queries (Admin only - read access)
-export function useGetLoginEvents() {
+// ─── Admin ────────────────────────────────────────────────────────────────────
+
+export function useIsCallerAdmin() {
   const { actor, isFetching } = useActor();
 
-  return useQuery<LoginEvent[]>({
-    queryKey: ['loginEvents'],
+  return useQuery<boolean>({
+    queryKey: ['isCallerAdmin'],
     queryFn: async () => {
-      if (!actor) return [];
-      return actor.getLoginEvents();
+      if (!actor) return false;
+      return actor.isCallerAdmin();
     },
     enabled: !!actor && !isFetching,
   });
 }
 
-export function useGetLoginEventsCSV() {
+// ─── Technician Availability ─────────────────────────────────────────────────
+
+export function useGetAllAvailableTechnicians() {
   const { actor, isFetching } = useActor();
 
-  return useQuery<string>({
-    queryKey: ['loginEventsCSV'],
+  return useQuery({
+    queryKey: ['availableTechnicians'],
     queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllAvailableTechnicians();
+    },
+    enabled: !!actor && !isFetching,
+    refetchInterval: 10000,
+  });
+}
+
+export function useSetTechnicianAvailability() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (isAvailable: boolean) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.getLoginEventsCSV();
+      return actor.setTechnicianAvailability(isAvailable);
     },
-    enabled: false, // Only fetch when explicitly called
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['availableTechnicians'] });
+    },
   });
 }
 
-// Message Queries - Real-time with aggressive polling
-export function useGetUserMessages() {
-  const { actor, isFetching } = useActor();
+// ─── Chat Messages ────────────────────────────────────────────────────────────
 
-  return useQuery<ChatMessage[]>({
-    queryKey: ['userMessages'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getUserMessages();
-    },
-    enabled: !!actor && !isFetching,
-    refetchInterval: 300,
-    staleTime: 0,
-  });
-}
-
-// Ticket-scoped chat messages — uses getChatMessages(ticketId) for proper history
 export function useGetChatMessages(ticketId: bigint | null) {
   const { actor, isFetching } = useActor();
 
-  return useQuery<ChatMessage[]>({
+  return useQuery({
     queryKey: ['chatMessages', ticketId?.toString()],
     queryFn: async () => {
       if (!actor || ticketId === null) return [];
       return actor.getChatMessages(ticketId);
     },
     enabled: !!actor && !isFetching && ticketId !== null,
-    refetchInterval: 1500,
-    staleTime: 0,
+    refetchInterval: 3000,
   });
 }
 
-export function useGetMessagesBetweenUsers(user1: Principal | null, user2: Principal | null) {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<ChatMessage[]>({
-    queryKey: ['messagesBetween', user1?.toString(), user2?.toString()],
-    queryFn: async () => {
-      if (!actor || !user1 || !user2) return [];
-      return actor.getMessagesBetweenUsers(user1, user2);
-    },
-    enabled: !!actor && !isFetching && !!user1 && !!user2,
-    refetchInterval: 300,
-    staleTime: 0,
-  });
-}
-
-export function useSendMessage() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ recipient, content, attachment }: { recipient: Principal; content: string; attachment?: ExternalBlob | null }) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.sendMessage(recipient, content, attachment || null);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userMessages'] });
-      queryClient.invalidateQueries({ queryKey: ['messagesBetween'] });
-      queryClient.invalidateQueries({ queryKey: ['userTickets'] });
-      queryClient.refetchQueries({ queryKey: ['userMessages'] });
-      queryClient.refetchQueries({ queryKey: ['messagesBetween'] });
-    },
-  });
-}
-
-// Send a message scoped to a specific support ticket
 export function useSendMessageForTicket() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -141,43 +110,17 @@ export function useSendMessageForTicket() {
     mutationFn: async ({
       ticketId,
       content,
-      attachment,
     }: {
       ticketId: bigint;
       content: string;
-      attachment?: ExternalBlob | null;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      const result = await actor.sendMessageForTicket(ticketId, content, attachment || null);
-      if (result.__kind__ === 'failed') {
-        throw new Error(result.failed);
-      }
-      return result;
+      return actor.sendMessageForTicket(ticketId, content, null);
     },
     onSuccess: (_data, variables) => {
-      // Invalidate the specific ticket's chat messages so they reload immediately
-      queryClient.invalidateQueries({ queryKey: ['chatMessages', variables.ticketId.toString()] });
-      queryClient.refetchQueries({ queryKey: ['chatMessages', variables.ticketId.toString()] });
-      queryClient.invalidateQueries({ queryKey: ['userMessages'] });
-      queryClient.invalidateQueries({ queryKey: ['userTickets'] });
-    },
-  });
-}
-
-export function useMarkMessagesAsRead() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ user1, user2 }: { user1: Principal; user2: Principal }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.markMessagesAsRead(user1, user2);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userMessages'] });
-      queryClient.invalidateQueries({ queryKey: ['messagesBetween'] });
-      queryClient.refetchQueries({ queryKey: ['userMessages'] });
-      queryClient.refetchQueries({ queryKey: ['messagesBetween'] });
+      queryClient.invalidateQueries({
+        queryKey: ['chatMessages', variables.ticketId.toString()],
+      });
     },
   });
 }
@@ -189,167 +132,198 @@ export function useMarkTicketMessagesAsRead() {
   return useMutation({
     mutationFn: async (ticketId: bigint) => {
       if (!actor) throw new Error('Actor not available');
-      await actor.markTicketMessagesAsRead(ticketId);
+      return actor.markTicketMessagesAsRead(ticketId);
     },
     onSuccess: (_data, ticketId) => {
-      queryClient.invalidateQueries({ queryKey: ['chatMessages', ticketId.toString()] });
+      queryClient.invalidateQueries({
+        queryKey: ['chatMessages', ticketId.toString()],
+      });
     },
   });
 }
 
-// Support Ticket Queries
-export function useGetUserTickets() {
+// ─── Knowledge Base ───────────────────────────────────────────────────────────
+
+export function useGetAllKBArticles() {
   const { actor, isFetching } = useActor();
 
-  return useQuery<SupportTicket[]>({
-    queryKey: ['userTickets'],
+  return useQuery<KBArticle[]>({
+    queryKey: ['kbArticles'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getUserTickets();
+      return actor.getAllKBArticles();
     },
     enabled: !!actor && !isFetching,
-    refetchInterval: 1000,
-    staleTime: 0,
   });
 }
 
-export function useCreateSupportTicket() {
+export function useGetKBArticle(articleId: bigint | null) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<KBArticle | null>({
+    queryKey: ['kbArticle', articleId?.toString()],
+    queryFn: async () => {
+      if (!actor || articleId === null) return null;
+      return actor.getKBArticle(articleId);
+    },
+    enabled: !!actor && !isFetching && articleId !== null,
+  });
+}
+
+export function useSearchKBArticles(searchTerm: string) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<KBArticle[]>({
+    queryKey: ['kbSearch', searchTerm],
+    queryFn: async () => {
+      if (!actor || !searchTerm) return [];
+      return actor.searchKBArticles(searchTerm);
+    },
+    enabled: !!actor && !isFetching && searchTerm.length > 0,
+  });
+}
+
+export function useGetArticlesByCategory(category: KnowledgeCategory | null) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<KBArticle[]>({
+    queryKey: ['kbByCategory', category],
+    queryFn: async () => {
+      if (!actor || !category) return [];
+      return actor.getArticlesByCategory(category);
+    },
+    enabled: !!actor && !isFetching && category !== null,
+  });
+}
+
+export function useCreateKBArticle() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (technician: Principal) => {
+    mutationFn: async ({
+      title,
+      category,
+      body,
+      tags,
+    }: {
+      title: string;
+      category: KnowledgeCategory;
+      body: string;
+      tags: string[];
+    }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.createSupportTicket(technician);
+      return actor.createKBArticle(title, category, body, tags);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userTickets'] });
-      queryClient.refetchQueries({ queryKey: ['userTickets'] });
+      queryClient.invalidateQueries({ queryKey: ['kbArticles'] });
     },
   });
 }
 
-export function useUpdateTicketStatus() {
+export function useUpdateKBArticle() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ ticketId, status }: { ticketId: bigint; status: any }) => {
+    mutationFn: async ({
+      articleId,
+      title,
+      category,
+      body,
+      tags,
+    }: {
+      articleId: bigint;
+      title: string;
+      category: KnowledgeCategory;
+      body: string;
+      tags: string[];
+    }) => {
       if (!actor) throw new Error('Actor not available');
-      await actor.updateTicketStatus(ticketId, status);
+      return actor.updateKBArticle(articleId, title, category, body, tags);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userTickets'] });
-      queryClient.refetchQueries({ queryKey: ['userTickets'] });
+      queryClient.invalidateQueries({ queryKey: ['kbArticles'] });
     },
   });
 }
 
-// Technician Availability
-export function useSetTechnicianAvailability() {
+export function useDeleteKBArticle() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (isAvailable: boolean) => {
+    mutationFn: async (articleId: bigint) => {
       if (!actor) throw new Error('Actor not available');
-      await actor.setTechnicianAvailability(isAvailable);
+      return actor.deleteKBArticle(articleId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['onlineExperts'] });
-      queryClient.invalidateQueries({ queryKey: ['technicianAvailability'] });
-      queryClient.invalidateQueries({ queryKey: ['allTechnicians'] });
-      queryClient.refetchQueries({ queryKey: ['onlineExperts'] });
-      queryClient.refetchQueries({ queryKey: ['technicianAvailability'] });
+      queryClient.invalidateQueries({ queryKey: ['kbArticles'] });
     },
   });
 }
 
-// Type for online experts with profile information
-export type OnlineExpert = {
-  expert: Principal;
-  profile: UserProfile;
-  isAvailable: boolean;
-};
+export function useIncrementArticleViewCount() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
 
-export function useGetOnlineExperts() {
+  return useMutation({
+    mutationFn: async (articleId: bigint) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.incrementArticleViewCount(articleId);
+    },
+    onSuccess: (_data, articleId) => {
+      queryClient.invalidateQueries({ queryKey: ['kbArticle', articleId.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['kbArticles'] });
+    },
+  });
+}
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
+export function useGetAnalyticsMetrics() {
   const { actor, isFetching } = useActor();
 
-  return useQuery<OnlineExpert[]>({
-    queryKey: ['onlineExperts'],
+  return useQuery({
+    queryKey: ['analyticsMetrics'],
     queryFn: async () => {
-      if (!actor) return [];
-      
-      // Get all available technicians
-      const technicians = await actor.getAllAvailableTechnicians();
-      
-      // Filter only available ones and fetch their profiles
-      const onlineExperts: OnlineExpert[] = [];
-      
-      for (const tech of technicians) {
-        if (tech.isAvailable) {
-          const profile = await actor.getUserProfile(tech.technician);
-          if (profile) {
-            onlineExperts.push({
-              expert: tech.technician,
-              profile: profile,
-              isAvailable: tech.isAvailable,
-            });
-          }
-        }
-      }
-      
-      return onlineExperts;
+      if (!actor) throw new Error('Actor not available');
+      return actor.getAnalyticsMetrics();
     },
     enabled: !!actor && !isFetching,
-    refetchInterval: 500,
-    staleTime: 0,
+    refetchInterval: 30000,
   });
 }
 
-export function useGetAllAvailableTechnicians() {
+// ─── Login Events ─────────────────────────────────────────────────────────────
+
+export function useGetLoginEvents() {
   const { actor, isFetching } = useActor();
 
-  return useQuery<TechnicianAvailability[]>({
-    queryKey: ['technicianAvailability'],
+  return useQuery({
+    queryKey: ['loginEvents'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getAllAvailableTechnicians();
+      return actor.getLoginEvents();
     },
     enabled: !!actor && !isFetching,
-    refetchInterval: 500,
-    staleTime: 0,
   });
 }
 
-export function useGetTechnicianAvailability(technician: Principal | null) {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<TechnicianAvailability | null>({
-    queryKey: ['technicianAvailability', technician?.toString()],
-    queryFn: async () => {
-      if (!actor || !technician) return null;
-      return actor.getTechnicianAvailability(technician);
-    },
-    enabled: !!actor && !isFetching && !!technician,
-    refetchInterval: 500,
-    staleTime: 0,
-  });
-}
-
-// Feedback/Rating
-export function useSubmitRating() {
+/** Returns a mutation — call `mutateAsync()` to fetch and download the CSV. */
+export function useGetLoginEventsCSV() {
   const { actor } = useActor();
 
   return useMutation({
-    mutationFn: async ({ rating, comment }: { rating: bigint; comment: string }) => {
+    mutationFn: async (): Promise<string> => {
       if (!actor) throw new Error('Actor not available');
-      await actor.submitRating(rating, comment);
+      return actor.getLoginEventsCSV();
     },
   });
 }
 
-// Payment Queries
+// ─── Payment ──────────────────────────────────────────────────────────────────
+
 export type CheckoutSession = {
   id: string;
   url: string;
@@ -368,22 +342,6 @@ export function useIsStripeConfigured() {
   });
 }
 
-export function useCreateCheckoutSession() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async (items: ShoppingItem[]): Promise<CheckoutSession> => {
-      if (!actor) throw new Error('Actor not available');
-      const baseUrl = `${window.location.protocol}//${window.location.host}`;
-      const successUrl = `${baseUrl}?payment=success`;
-      const cancelUrl = `${baseUrl}?payment=cancelled`;
-      const result = await actor.createCheckoutSession(items, successUrl, cancelUrl);
-      const session = JSON.parse(result) as CheckoutSession;
-      return session;
-    },
-  });
-}
-
 export function useCreateSupportCheckoutSession() {
   const { actor } = useActor();
 
@@ -391,24 +349,65 @@ export function useCreateSupportCheckoutSession() {
     mutationFn: async (): Promise<CheckoutSession> => {
       if (!actor) throw new Error('Actor not available');
       const baseUrl = `${window.location.protocol}//${window.location.host}`;
-      const successUrl = `${baseUrl}?payment=success`;
-      const cancelUrl = `${baseUrl}?payment=cancelled`;
+      const successUrl = `${baseUrl}/payment-success`;
+      const cancelUrl = `${baseUrl}/payment-failure`;
       const result = await actor.createSupportCheckoutSession(successUrl, cancelUrl);
       const session = JSON.parse(result) as CheckoutSession;
+      if (!session?.url) throw new Error('Stripe session missing url');
       return session;
     },
   });
 }
 
-export function useIsCallerAdmin() {
-  const { actor, isFetching } = useActor();
+export function useCreateCheckoutSession() {
+  const { actor } = useActor();
 
-  return useQuery<boolean>({
-    queryKey: ['isAdmin'],
-    queryFn: async () => {
-      if (!actor) return false;
-      return actor.isCallerAdmin();
+  return useMutation({
+    mutationFn: async (items: ShoppingItem[]): Promise<CheckoutSession> => {
+      if (!actor) throw new Error('Actor not available');
+      const baseUrl = `${window.location.protocol}//${window.location.host}`;
+      const successUrl = `${baseUrl}/payment-success`;
+      const cancelUrl = `${baseUrl}/payment-failure`;
+      const result = await actor.createCheckoutSession(items, successUrl, cancelUrl);
+      const session = JSON.parse(result) as CheckoutSession;
+      if (!session?.url) throw new Error('Stripe session missing url');
+      return session;
     },
-    enabled: !!actor && !isFetching,
+  });
+}
+
+// ─── Customer History ─────────────────────────────────────────────────────────
+
+export function useGetCustomerHistory() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<SupportTicket[]>({
+    queryKey: ['customerHistory'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getCustomerHistory();
+    },
+    enabled: !!actor && !actorFetching && !!identity,
+    refetchInterval: 15000,
+    staleTime: 5000,
+  });
+}
+
+// ─── Expert History ───────────────────────────────────────────────────────────
+
+export function useGetExpertHistory() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<SupportTicket[]>({
+    queryKey: ['expertHistory'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getExpertHistory();
+    },
+    enabled: !!actor && !actorFetching && !!identity,
+    refetchInterval: 15000,
+    staleTime: 5000,
   });
 }

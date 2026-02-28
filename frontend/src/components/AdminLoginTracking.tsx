@@ -10,29 +10,25 @@ import { toast } from 'sonner';
 
 export default function AdminLoginTracking() {
   const { data: loginEvents = [], isLoading } = useGetLoginEvents();
-  const { refetch: downloadCSV, isFetching: isDownloading } = useGetLoginEventsCSV();
+  const downloadCSVMutation = useGetLoginEventsCSV();
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const handleDownloadCSV = async () => {
     try {
       setDownloadError(null);
-      const result = await downloadCSV();
-      
-      if (result.data) {
-        const blob = new Blob([result.data], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `login-tracking-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        toast.success('Login tracking data downloaded successfully');
-      } else {
-        throw new Error('No data received');
-      }
+      const csvData = await downloadCSVMutation.mutateAsync();
+
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `login-tracking-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('Login tracking data downloaded successfully');
     } catch (error) {
       const errorMsg = 'Failed to download login tracking data';
       setDownloadError(errorMsg);
@@ -89,10 +85,10 @@ export default function AdminLoginTracking() {
             </div>
             <Button
               onClick={handleDownloadCSV}
-              disabled={isDownloading || loginEvents.length === 0}
+              disabled={downloadCSVMutation.isPending || loginEvents.length === 0}
               className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-md"
             >
-              {isDownloading ? (
+              {downloadCSVMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Downloading...
@@ -141,8 +137,8 @@ export default function AdminLoginTracking() {
               </TableHeader>
               <TableBody>
                 {loginEvents.map((event, index) => (
-                  <TableRow 
-                    key={index} 
+                  <TableRow
+                    key={index}
                     className="hover:bg-teal-50 dark:hover:bg-teal-950/20 transition-colors"
                   >
                     <TableCell className="font-medium">{event.name}</TableCell>
@@ -155,7 +151,10 @@ export default function AdminLoginTracking() {
                     <TableCell className="text-sm font-mono">
                       {formatTimestamp(event.timestamp)}
                     </TableCell>
-                    <TableCell className="text-xs font-mono text-muted-foreground max-w-[200px] truncate" title={event.principalId}>
+                    <TableCell
+                      className="text-xs font-mono text-muted-foreground max-w-[200px] truncate"
+                      title={event.principalId}
+                    >
                       {event.principalId}
                     </TableCell>
                   </TableRow>
@@ -167,13 +166,14 @@ export default function AdminLoginTracking() {
 
         <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex items-start gap-3">
-            <FileSpreadsheet className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <FileSpreadsheet className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
                 Excel-Compatible CSV Export
               </p>
               <p className="text-xs text-blue-800 dark:text-blue-200">
-                Download login tracking data as a CSV file for offline analysis in Excel, Google Sheets, or other spreadsheet applications.
+                Download login tracking data as a CSV file for offline analysis in Excel, Google
+                Sheets, or other spreadsheet applications.
               </p>
             </div>
           </div>
