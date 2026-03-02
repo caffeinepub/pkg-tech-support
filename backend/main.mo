@@ -7,7 +7,6 @@ import Iter "mo:core/Iter";
 import Principal "mo:core/Principal";
 import Storage "blob-storage/Storage";
 import Int "mo:core/Int";
-import Migration "migration";
 import Runtime "mo:core/Runtime";
 import AccessControl "authorization/access-control";
 import Stripe "stripe/stripe";
@@ -15,7 +14,6 @@ import OutCall "http-outcalls/outcall";
 import MixinStorage "blob-storage/Mixin";
 import Error "mo:core/Error";
 
-(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -960,8 +958,6 @@ actor {
     };
   };
 
-  // Correct initialization of ticketsByAssignee
-
   public query ({ caller }) func getUserTickets() : async [SupportTicket] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access support tickets");
@@ -971,7 +967,6 @@ actor {
     });
   };
 
-  // Get history for customer dashboard (resolved tickets)
   public query ({ caller }) func getCustomerHistory() : async [SupportTicket] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access support tickets");
@@ -983,7 +978,6 @@ actor {
     resolvedTickets;
   };
 
-  // Get expert's resolved tickets for history section
   public query ({ caller }) func getExpertHistory() : async [SupportTicket] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access support tickets");
@@ -999,7 +993,6 @@ actor {
     };
   };
 
-  // Helper function to check if caller is an expert
   func isExpert(caller : Principal) : Bool {
     switch (userProfiles.get(caller)) {
       case (?profile) { profile.isTechnician };
@@ -1088,7 +1081,6 @@ actor {
     };
   };
 
-  // Knowledge Base functions
   public shared ({ caller }) func createKBArticle(
     title : Text,
     category : KnowledgeCategory,

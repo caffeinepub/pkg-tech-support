@@ -1,109 +1,76 @@
 {
   "kind": "build_request",
-  "title": "Fix history display on customer/expert pages and remove payment option from ticket creation",
-  "projectName": "TechSupport Platform",
+  "title": "Customer Panel Modifications: Remove History, Disable Auto-Scroll, Simplify Ticket Payment",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Remove the payment option (payment field, payment toggle, or any payment-related UI element) from the ticket creation form in the CustomerDashboard so customers cannot set payment details when creating a new ticket.",
+      "text": "Remove the chat/ticket history section (ServiceHistoryTimeline and any related 'History' tab) from the CustomerDashboard and ClientPortal entirely. The tab and its contents should not appear in the customer-facing UI.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-6"
         ],
         "quotes": [
-          "remove the payment option while creating the ticket from customer dashboard"
+          "Remove History Option: Delete the chat/ticket history section from the customer dashboard entirely."
         ]
       },
       "acceptanceCriteria": [
-        "The TicketCreationForm component does not render any payment-related fields or toggles.",
-        "A new ticket can be created without any payment input.",
-        "No payment data is submitted as part of ticket creation."
+        "No 'History' or 'Service History' tab is visible in the CustomerDashboard or ClientPortal.",
+        "ServiceHistoryTimeline component is not rendered anywhere in the customer-facing flow.",
+        "Removing the tab does not break any other functionality."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Fix the expert/technician's payment request toggle in the ChatSection so that toggling the payment button opens the payment request popup/modal correctly. The modal must appear when the expert activates the payment toggle.",
+      "text": "Disable any automatic scroll-to-top behavior on both the CustomerDashboard and ExpertDashboard panels. When switching tabs or navigating within these dashboards, the page/panel should remain at its current scroll position.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-6"
         ],
         "quotes": [
-          "expert is tryg to send the payment option by toggle button nut pop up is not coming"
+          "Disable Auto-Scroll: Stop automatic scrolling to top on both customer and expert panels."
         ]
       },
       "acceptanceCriteria": [
-        "When the expert clicks the payment toggle in ChatSection, the PaymentRequestModal (or equivalent payment popup) opens.",
-        "The modal displays the correct payment details for the active ticket.",
-        "Closing or dismissing the modal resets the toggle state appropriately."
+        "Switching tabs in CustomerDashboard does not scroll the page/panel to the top.",
+        "Switching tabs in ExpertDashboard does not scroll the page/panel to the top.",
+        "No window.scrollTo, element.scrollTop, or similar auto-scroll calls are triggered on tab changes in either dashboard."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Fix the Service History / history tab on the CustomerDashboard (ClientPortal) so that resolved tickets and past interactions are correctly fetched from the backend and displayed. The history list must not be empty when resolved tickets exist.",
+      "text": "Remove the full payment requirement that blocks ticket creation in TicketCreationForm. Replace it with a minimum fixed charge of $1 USD. The ticket creation flow should proceed after a $1 charge is processed, not the full session payment. Eliminate any logic that enforces the full payment script before ticket submission.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-6"
         ],
         "quotes": [
-          "customer and expert page are not showing history"
+          "Remove full payment requirement for ticket creation (currently blocking customers).",
+          "Implement minimum $1 fixed charge only—eliminate the full payment script."
         ]
       },
       "acceptanceCriteria": [
-        "The 'Service History' or history tab in the CustomerDashboard renders all resolved tickets associated with the logged-in customer.",
-        "The ServiceHistoryTimeline component receives and displays non-empty data when resolved tickets exist in the backend.",
-        "Loading and empty states are handled gracefully with appropriate messages."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Fix the history/ticket history section on the ExpertDashboard so that past and resolved tickets handled by the expert are correctly fetched and displayed. The list must not be empty when historical ticket data exists.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "customer and expert page are not showing history"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The ExpertDashboard's ticket history section renders resolved or closed tickets assigned to the logged-in technician.",
-        "The correct backend query is called (e.g., filtering by technician principal or resolved status) and results are passed to the UI.",
-        "Loading and empty states are handled gracefully."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Resolve the deployment error that caused the previous build to fail. Audit the backend Motoko actor (backend/main.mo) and frontend entry files for any compilation or runtime errors, fix type mismatches, missing imports, or malformed function signatures, and ensure the project builds and deploys successfully.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-2"
-        ],
-        "quotes": [
-          "Deployment error encountered during build"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The backend Motoko actor compiles without errors.",
-        "The frontend builds without TypeScript or bundler errors.",
-        "The deployed application loads and all routes are accessible."
+        "Customers can create a ticket after a $1 fixed charge without being blocked by a full payment requirement.",
+        "TicketCreationForm no longer presents or enforces a full payment flow before ticket submission.",
+        "The $1 minimum charge is clearly communicated to the customer in the ticket creation UI.",
+        "Backend ticket creation logic does not require full payment validation to proceed.",
+        "Chat remains disabled for customers (no change to that behavior)."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
-    "Keep all backend logic within the single actor in backend/main.mo.",
-    "Do not introduce new payment gateways or external services."
+    "Chat must remain disabled for customers — do not change this behavior.",
+    "Do not modify files in frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
+    "Expert dashboard history timeline (ServiceHistoryTimeline in ExpertDashboard) should remain untouched — only remove from the customer side."
   ],
   "nonGoals": [
-    "Adding new payment providers or restructuring the payment flow beyond fixing the modal toggle.",
-    "Redesigning the dashboard layout or navigation.",
-    "Adding new ticket fields or changing the ticket data model beyond what is required for these fixes."
+    "Changing any expert/technician panel payment request functionality.",
+    "Enabling chat for customers.",
+    "Modifying the knowledge base or analytics sections.",
+    "Removing payment functionality from the expert-initiated PaymentRequestModal."
   ],
   "imageRequirements": {
     "required": [],

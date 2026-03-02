@@ -1,113 +1,58 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-28T18:48:55.574Z",
+  "generatedAt": "2026-03-01T17:21:41.018Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 5,
+    "total": 3,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Remove the payment option (payment field, payment toggle, or any payment-related UI element) from the ticket creation form in the CustomerDashboard so customers cannot set payment details when creating a new ticket.",
+        "summary": "Remove the chat/ticket history section (ServiceHistoryTimeline and any related 'History' tab) from the CustomerDashboard and ClientPortal entirely. The tab and its contents should not appear in the customer-facing UI.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/TicketCreationForm.tsx"
+          "frontend/src/components/CustomerDashboard.tsx",
+          "frontend/src/components/ClientPortal.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/TicketCreationForm.tsx"
+          "frontend/src/components/ClientPortal.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Fix the expert/technician's payment request toggle in the ChatSection so that toggling the payment button opens the payment request popup/modal correctly. The modal must appear when the expert activates the payment toggle.",
-        "status": "implemented",
+        "summary": "Disable any automatic scroll-to-top behavior on both the CustomerDashboard and ExpertDashboard panels. When switching tabs or navigating within these dashboards, the page/panel should remain at its current scroll position.",
+        "status": "missing",
         "plannedFiles": [
-          "frontend/src/components/ChatSection.tsx",
-          "frontend/src/components/PaymentRequestModal.tsx"
+          "frontend/src/components/CustomerDashboard.tsx",
+          "frontend/src/components/ExpertDashboard.tsx"
         ],
-        "matchedFiles": [
-          "frontend/src/components/ChatSection.tsx",
-          "frontend/src/components/PaymentRequestModal.tsx"
-        ]
+        "matchedFiles": []
       },
       {
         "id": "REQ-3",
-        "summary": "Fix the Service History / history tab on the CustomerDashboard (ClientPortal) so that resolved tickets and past interactions are correctly fetched from the backend and displayed. The history list must not be empty when resolved tickets exist.",
+        "summary": "Remove the full payment requirement that blocks ticket creation in TicketCreationForm. Replace it with a minimum fixed charge of $1 USD. The ticket creation flow should proceed after a $1 charge is processed, not the full session payment. Eliminate any logic that enforces the full payment script before ticket submission.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/ServiceHistoryTimeline.tsx",
-          "frontend/src/components/ClientPortal.tsx"
+          "frontend/src/components/TicketCreationForm.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/ServiceHistoryTimeline.tsx",
-          "frontend/src/components/ClientPortal.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Fix the history/ticket history section on the ExpertDashboard so that past and resolved tickets handled by the expert are correctly fetched and displayed. The list must not be empty when historical ticket data exists.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/ExpertDashboard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/ExpertDashboard.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Resolve the deployment error that caused the previous build to fail. Audit the backend Motoko actor (backend/main.mo) and frontend entry files for any compilation or runtime errors, fix type mismatches, missing imports, or malformed function signatures, and ensure the project builds and deploys successfully.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/CustomerDashboard.tsx",
-          "frontend/src/components/ExpertDashboard.tsx",
-          "frontend/src/components/ChatSection.tsx",
-          "frontend/src/hooks/usePaymentToggle.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/hooks/useTickets.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/CustomerDashboard.tsx",
-          "frontend/src/components/ExpertDashboard.tsx",
-          "frontend/src/components/ChatSection.tsx",
-          "frontend/src/hooks/usePaymentToggle.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/hooks/useTickets.ts"
+          "frontend/src/components/TicketCreationForm.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/AdminLoginTracking.tsx",
-    "frontend/src/components/ChatSection.tsx",
     "frontend/src/components/ClientPortal.tsx",
-    "frontend/src/components/CustomerDashboard.tsx",
-    "frontend/src/components/ExpertDashboard.tsx",
-    "frontend/src/components/PaymentRequestModal.tsx",
-    "frontend/src/components/ServiceHistoryTimeline.tsx",
     "frontend/src/components/TicketCreationForm.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/usePaymentToggle.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/hooks/useTickets.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

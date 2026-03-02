@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Plus, History, Ticket, Star } from 'lucide-react';
+import { Plus, Ticket, Star } from 'lucide-react';
 import TicketListView from './TicketListView';
-import ServiceHistoryTimeline from './ServiceHistoryTimeline';
 import TicketCreationForm from './TicketCreationForm';
 import {
   Dialog,
@@ -37,14 +36,10 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ onStartChat }) => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="mx-4 mt-3 mb-0 grid grid-cols-3 bg-muted/50">
+        <TabsList className="mx-4 mt-3 mb-0 grid grid-cols-2 bg-muted/50">
           <TabsTrigger value="tickets" className="gap-1.5 text-xs">
             <Ticket className="h-3.5 w-3.5" />
             My Tickets
-          </TabsTrigger>
-          <TabsTrigger value="history" className="gap-1.5 text-xs">
-            <History className="h-3.5 w-3.5" />
-            Service History
           </TabsTrigger>
           <TabsTrigger value="plans" className="gap-1.5 text-xs">
             <Star className="h-3.5 w-3.5" />
@@ -54,10 +49,6 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ onStartChat }) => {
 
         <TabsContent value="tickets" className="flex-1 overflow-y-auto mt-0 p-4">
           <TicketListView showAll={false} />
-        </TabsContent>
-
-        <TabsContent value="history" className="flex-1 overflow-y-auto mt-0 p-4">
-          <ServiceHistoryTimeline />
         </TabsContent>
 
         <TabsContent value="plans" className="flex-1 overflow-y-auto mt-0 p-4">

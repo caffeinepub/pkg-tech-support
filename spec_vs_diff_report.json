@@ -1,49 +1,42 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-28T18:48:55.571Z",
-  "summary": "The diff implements all five requirements. REQ-1 is addressed by removing payment fields from TicketCreationForm. REQ-2 is addressed in ChatSection with a payment toggle that opens PaymentRequestModal and resets on close. REQ-3 is addressed by ServiceHistoryTimeline using useGetCustomerHistory with loading/empty/error states. REQ-4 is addressed by ExpertHistorySection using useGetExpertHistory with loading/empty/error states. REQ-5 is addressed by backend/main.mo fixes and migration.mo addition. All requirements appear substantially implemented.",
-  "missing_requirements": [],
-  "hallucinated_features": [
+  "generatedAt": "2026-03-01T17:21:41.015Z",
+  "summary": "The diff partially addresses the three requirements. REQ-3 (simplified $1 payment for ticket creation) is well-implemented in TicketCreationForm.tsx and backend/main.mo. REQ-1 (remove History tab from CustomerDashboard/ClientPortal) appears partially addressed in ClientPortal.tsx (only 2 tabs visible: tickets and plans), but CustomerDashboard.tsx was not modified in the diff. REQ-2 (disable auto-scroll) has no evidence of implementation in any modified file.",
+  "missing_requirements": [
     {
-      "description": "A 'Payment' tab (CreditCard icon) remains in the CustomerDashboard navigation, allowing customers to access the PaymentSection component directly.",
-      "reason": "REQ-1 specifies removing payment-related UI from ticket creation, which is done, but the CustomerDashboard still prominently exposes a full Payment tab with PaymentSection. This tab with PaymentSection content goes beyond what any requirement asked to add in this build.",
+      "id": "REQ-1",
+      "requirement": "Remove ServiceHistoryTimeline and any related History tab from CustomerDashboard entirely.",
+      "reason": "CustomerDashboard.tsx does not appear in the modified files list. There is no direct diff evidence of ServiceHistoryTimeline being removed from CustomerDashboard. Only ClientPortal.tsx was modified and shows 2 tabs with no History tab.",
       "evidence": [
         "frontend/src/components/CustomerDashboard.tsx"
       ]
     },
     {
-      "description": "A PaymentModalController component is added to CustomerDashboard that polls the active ticket's toggle state every 5 seconds and auto-shows PaymentRequestModal on the customer side when the technician enables the payment toggle.",
-      "reason": "REQ-2 only asks to fix the expert's payment toggle opening the modal in ChatSection. The auto-showing modal controller on the customer side was not explicitly requested in any requirement.",
+      "id": "REQ-2",
+      "requirement": "Disable automatic scroll-to-top behavior on tab changes in both CustomerDashboard and ExpertDashboard.",
+      "reason": "None of the modified files contain any changes related to removing window.scrollTo, element.scrollTop, or scroll behavior. Neither CustomerDashboard.tsx nor ExpertDashboard.tsx appear in the modified files list.",
       "evidence": [
-        "frontend/src/components/CustomerDashboard.tsx"
-      ]
-    },
-    {
-      "description": "backend/migration.mo module added as a new file with a no-op migration runner used in the actor declaration.",
-      "reason": "No requirement explicitly asked for adding a migration module. This is infrastructure added beyond what was specified, though it may be incidentally necessary for build fixes.",
-      "evidence": [
-        "backend/migration.mo",
-        "backend/main.mo"
+        "frontend/src/components/CustomerDashboard.tsx",
+        "frontend/src/components/ExpertDashboard.tsx"
       ]
     }
   ],
-  "confidence": 0.78,
+  "hallucinated_features": [
+    {
+      "description": "Support Plans tab in ClientPortal with INR pricing tiers (Basic at Rs.299, Premium plan)",
+      "reason": "The build request does not mention adding a Plans tab or INR-denominated support plans to the ClientPortal. The diff shows a new plans tab with rupee-denominated pricing which was not requested.",
+      "evidence": [
+        "frontend/src/components/ClientPortal.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.72,
   "changed_files": [
     "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/AdminLoginTracking.tsx",
-    "frontend/src/components/ChatSection.tsx",
     "frontend/src/components/ClientPortal.tsx",
-    "frontend/src/components/CustomerDashboard.tsx",
-    "frontend/src/components/ExpertDashboard.tsx",
-    "frontend/src/components/PaymentRequestModal.tsx",
-    "frontend/src/components/ServiceHistoryTimeline.tsx",
     "frontend/src/components/TicketCreationForm.tsx",
-    "frontend/src/hooks/usePaymentToggle.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/hooks/useTickets.ts",
     "project_state.json"
   ]
 }

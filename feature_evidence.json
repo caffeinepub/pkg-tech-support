@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-remove-the-payment-option-payment-field-payment-toggle-or-any-payment-related-ui-element-from-the-ticket-creation-form-in-the-customerdashboard-so-customers-cannot-set-payment-details-when-creating-a-new-ticket",
-      "featureTitle": "Remove the payment option (payment field, payment toggle, or any payment-related UI element) from the ticket creation form in the CustomerDashboard so customers cannot set payment details when creating a new ticket.",
+      "featureId": "feature-remove-the-chat-ticket-history-section-servicehistorytimeline-and-any-related-history-tab-from-the-customerdashboard-and-clientportal-entirely-the-tab-and-its-contents-should-not-appear-in-the-customer-facing-ui",
+      "featureTitle": "Remove the chat/ticket history section (ServiceHistoryTimeline and any related 'History' tab) from the CustomerDashboard and ClientPortal entirely. The tab and its contents should not appear in the customer-facing UI.",
       "files": [
-        "frontend/src/components/TicketCreationForm.tsx"
+        "frontend/src/components/ClientPortal.tsx"
       ],
       "components": [
         "authorization@3.0.0",
@@ -26,37 +26,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-fix-the-expert-technician-s-payment-request-toggle-in-the-chatsection-so-that-toggling-the-payment-button-opens-the-payment-request-popup-modal-correctly-the-modal-must-appear-when-the-expert-activates-the-payment-toggle",
-      "featureTitle": "Fix the expert/technician's payment request toggle in the ChatSection so that toggling the payment button opens the payment request popup/modal correctly. The modal must appear when the expert activates the payment toggle.",
+      "featureId": "feature-remove-the-full-payment-requirement-that-blocks-ticket-creation-in-ticketcreationform-replace-it-with-a-minimum-fixed-charge-of-1-usd-the-ticket-creation-flow-should-proceed-after-a-1-charge-is-processed-not-the-full-session-payment-eliminate-any-logic-that-enforces-the-full-payment-script-before-ticket-submission",
+      "featureTitle": "Remove the full payment requirement that blocks ticket creation in TicketCreationForm. Replace it with a minimum fixed charge of $1 USD. The ticket creation flow should proceed after a $1 charge is processed, not the full session payment. Eliminate any logic that enforces the full payment script before ticket submission.",
       "files": [
-        "frontend/src/components/ChatSection.tsx",
-        "frontend/src/components/PaymentRequestModal.tsx"
-      ],
-      "components": [
-        "authorization@3.0.0",
-        "stripe@3.0.0",
-        "http-outcalls@3.0.0",
-        "blob-storage@4.0.0",
-        "qr-code@1.0.0",
-        "camera@1.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-fix-the-service-history-history-tab-on-the-customerdashboard-clientportal-so-that-resolved-tickets-and-past-interactions-are-correctly-fetched-from-the-backend-and-displayed-the-history-list-must-not-be-empty-when-resolved-tickets-exist",
-      "featureTitle": "Fix the Service History / history tab on the CustomerDashboard (ClientPortal) so that resolved tickets and past interactions are correctly fetched from the backend and displayed. The history list must not be empty when resolved tickets exist.",
-      "files": [
-        "frontend/src/components/ClientPortal.tsx",
-        "frontend/src/components/ServiceHistoryTimeline.tsx",
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/components/TicketCreationForm.tsx"
       ],
       "components": [
         "authorization@3.0.0",
@@ -73,60 +46,6 @@
       ],
       "testIds": [
         "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-fix-the-history-ticket-history-section-on-the-expertdashboard-so-that-past-and-resolved-tickets-handled-by-the-expert-are-correctly-fetched-and-displayed-the-list-must-not-be-empty-when-historical-ticket-data-exists",
-      "featureTitle": "Fix the history/ticket history section on the ExpertDashboard so that past and resolved tickets handled by the expert are correctly fetched and displayed. The list must not be empty when historical ticket data exists.",
-      "files": [
-        "frontend/src/components/ExpertDashboard.tsx",
-        "frontend/src/hooks/useQueries.ts"
-      ],
-      "components": [
-        "authorization@3.0.0",
-        "stripe@3.0.0",
-        "http-outcalls@3.0.0",
-        "blob-storage@4.0.0",
-        "qr-code@1.0.0",
-        "camera@1.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-resolve-the-deployment-error-that-caused-the-previous-build-to-fail-audit-the-backend-motoko-actor-backend-main-mo-and-frontend-entry-files-for-any-compilation-or-runtime-errors-fix-type-mismatches-missing-imports-or-malformed-function-signatures-and-ensure-the-project-builds-and-deploys-successfully",
-      "featureTitle": "Resolve the deployment error that caused the previous build to fail. Audit the backend Motoko actor (backend/main.mo) and frontend entry files for any compilation or runtime errors, fix type mismatches, missing imports, or malformed function signatures, and ensure the project builds and deploys successfully.",
-      "files": [
-        "frontend/src/components/ChatSection.tsx",
-        "frontend/src/components/CustomerDashboard.tsx",
-        "frontend/src/components/ExpertDashboard.tsx",
-        "frontend/src/hooks/usePaymentToggle.ts",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/hooks/useTickets.ts"
-      ],
-      "components": [
-        "authorization@3.0.0",
-        "stripe@3.0.0",
-        "http-outcalls@3.0.0",
-        "blob-storage@4.0.0",
-        "qr-code@1.0.0",
-        "camera@1.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
       ],
       "confidence": "high"
     }
